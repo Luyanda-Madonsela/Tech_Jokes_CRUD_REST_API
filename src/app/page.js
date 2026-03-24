@@ -432,13 +432,14 @@ export default function Home() {
           ) : (
             /* Add Post Form */
             <div className="pt-8" data-testid="add-post-form">
-              <div className="flex items-center gap-5 mb-8">
+              <div className="flex items-center gap-8 mb-8">
                 <button 
-                  className="text-white hover:text-gray-300 transition-colors"
+                  className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
                   onClick={() => setShowAddPost(false)}
                   data-testid="back-btn"
                 >
                   <ArrowLeft size={24} />
+                  <span className="text-lg">Back</span>
                 </button>
                 <h2 className="text-2xl font-semibold text-white">Add Post</h2>
               </div>
