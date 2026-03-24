@@ -218,8 +218,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#0d0f1e]" data-testid="main-container">
-      {/* Header */}
-      <header className="px-6 py-4 border-b border-[#1e2140]" data-testid="header">
+      {/* Header - Fixed */}
+      <header className="fixed top-0 left-0 right-0 z-40 px-6 py-4 border-b border-[#1e2140] bg-[#0d0f1e]" data-testid="header">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2" data-testid="logo">
             <span className="font-mono font-bold text-2xl tracking-wider text-[#f5d742]" style={{textShadow: '1px 1px 0 #ff9800'}}>CRACK-A-GAG</span>
@@ -260,9 +260,9 @@ export default function Home() {
         <p className="text-[10px] text-[#ff5722] tracking-wide mt-1">laugh and learn tech</p>
       </header>
 
-      <div className="flex">
-        {/* Sidebar */}
-        <aside className="w-64 px-5 py-5 flex-shrink-0" data-testid="sidebar">
+      <div className="flex pt-[72px]">
+        {/* Sidebar - Fixed */}
+        <aside className="fixed top-[72px] left-0 bottom-0 w-64 px-5 py-5 overflow-y-auto bg-[#0d0f1e] border-r border-[#1e2140]" data-testid="sidebar">
           <nav className="space-y-2">
             <div 
               className={`flex items-center gap-3 py-2 cursor-pointer transition-colors text-sm ${sortBy === 'trending' ? 'text-white' : 'text-gray-400 hover:text-white'}`}
@@ -299,8 +299,8 @@ export default function Home() {
           </div>
         </aside>
 
-        {/* Main Content */}
-        <main className="flex-1 px-8 py-5" data-testid="main-content">
+        {/* Main Content - Scrollable */}
+        <main className="flex-1 ml-64 px-8 py-5 min-h-[calc(100vh-72px)]" data-testid="main-content">
           {!showAddPost ? (
             <>
               {/* Tabs and Post Button */}
