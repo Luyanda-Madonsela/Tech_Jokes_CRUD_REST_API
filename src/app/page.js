@@ -219,57 +219,76 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#0d0f1e]" data-testid="main-container">
       {/* Header */}
-      <header className="px-6 py-3 border-b border-[#1e2140]" data-testid="header">
+      <header className="px-6 py-4 border-b border-[#1e2140]" data-testid="header">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2" data-testid="logo">
-            <span className="font-mono font-bold text-xl tracking-wider text-[#f5d742]" style={{textShadow: '1px 1px 0 #ff9800'}}>CRACK-A-GAG</span>
-            <span className="text-2xl">👋😊</span>
+            <span className="font-mono font-bold text-2xl tracking-wider text-[#f5d742]" style={{textShadow: '1px 1px 0 #ff9800'}}>CRACK-A-GAG</span>
+            <span className="text-3xl">👋😊</span>
           </div>
-          {user && (
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-400">Hi, {user.username}</span>
-              <button 
-                onClick={handleLogout}
-                className="text-sm text-gray-400 hover:text-white transition-colors"
-                data-testid="logout-btn"
-              >
-                Logout
-              </button>
-            </div>
-          )}
+          <div className="flex items-center gap-4">
+            {user ? (
+              <>
+                <span className="text-base text-gray-300">Hi, {user.username}</span>
+                <button 
+                  onClick={handleLogout}
+                  className="px-5 py-2 text-base text-gray-300 hover:text-white border border-[#3d4270] rounded-full hover:border-[#5a6aff] transition-all"
+                  data-testid="logout-btn"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <button 
+                  onClick={() => { setIsLogin(true); setShowAuth(true); }}
+                  className="px-5 py-2 text-base text-gray-300 hover:text-white border border-[#3d4270] rounded-full hover:border-[#5a6aff] transition-all"
+                  data-testid="signin-btn"
+                >
+                  Sign In
+                </button>
+                <button 
+                  onClick={() => { setIsLogin(false); setShowAuth(true); }}
+                  className="px-5 py-2 text-base text-white bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] rounded-full hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
+                  data-testid="signup-btn"
+                >
+                  Sign Up
+                </button>
+              </>
+            )}
+          </div>
         </div>
-        <p className="text-[10px] text-[#ff5722] tracking-wide">laugh and learn tech</p>
+        <p className="text-xs text-[#ff5722] tracking-wide mt-1">laugh and learn tech</p>
       </header>
 
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-52 px-5 py-5 flex-shrink-0" data-testid="sidebar">
-          <nav className="space-y-2">
+        <aside className="w-72 px-6 py-6 flex-shrink-0" data-testid="sidebar">
+          <nav className="space-y-3">
             <div 
-              className={`flex items-center gap-3 py-2 cursor-pointer transition-colors text-sm ${sortBy === 'trending' ? 'text-white' : 'text-gray-400 hover:text-white'}`}
+              className={`flex items-center gap-3 py-2 cursor-pointer transition-colors text-base ${sortBy === 'trending' ? 'text-white' : 'text-gray-400 hover:text-white'}`}
               onClick={() => setSortBy('trending')}
               data-testid="trending-nav"
             >
-              <TrendingUp size={16} />
+              <TrendingUp size={20} />
               <span>Trending</span>
             </div>
             <div 
-              className={`flex items-center gap-3 py-2 cursor-pointer transition-colors text-sm ${sortBy === 'top' ? 'text-white' : 'text-gray-400 hover:text-white'}`}
+              className={`flex items-center gap-3 py-2 cursor-pointer transition-colors text-base ${sortBy === 'top' ? 'text-white' : 'text-gray-400 hover:text-white'}`}
               onClick={() => setSortBy('top')}
               data-testid="top-ranked-nav"
             >
-              <BarChart3 size={16} />
+              <BarChart3 size={20} />
               <span>Top Ranked</span>
             </div>
           </nav>
 
-          <div className="mt-6">
-            <h3 className="text-white font-medium mb-3 text-sm">Interests</h3>
-            <div className="space-y-0.5">
+          <div className="mt-8">
+            <h3 className="text-white font-medium mb-4 text-base">Interests</h3>
+            <div className="space-y-1">
               {INTERESTS.map((interest, idx) => (
                 <div
                   key={idx}
-                  className={`py-1.5 pl-2 cursor-pointer transition-colors text-[13px] ${selectedInterest === interest ? 'text-white' : 'text-gray-400 hover:text-white'}`}
+                  className={`py-2 pl-2 cursor-pointer transition-colors text-[15px] ${selectedInterest === interest ? 'text-white' : 'text-gray-400 hover:text-white'}`}
                   onClick={() => setSelectedInterest(selectedInterest === interest ? null : interest)}
                   data-testid={`interest-${interest.toLowerCase().replace(/[^a-z]/g, '-')}`}
                 >
@@ -281,21 +300,21 @@ export default function Home() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 px-6 py-4" data-testid="main-content">
+        <main className="flex-1 px-8 py-6" data-testid="main-content">
           {!showAddPost ? (
             <>
               {/* Tabs and Post Button */}
-              <div className="flex items-start justify-between mb-1">
-                <div className="flex gap-6">
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex gap-8">
                   <span
-                    className={`text-lg font-medium cursor-pointer pb-1 border-b-2 transition-all ${activeTab === 'jokes' ? 'text-white border-white' : 'text-gray-400 border-transparent hover:text-white'}`}
+                    className={`text-xl font-medium cursor-pointer pb-1 border-b-2 transition-all ${activeTab === 'jokes' ? 'text-white border-white' : 'text-gray-400 border-transparent hover:text-white'}`}
                     onClick={() => setActiveTab('jokes')}
                     data-testid="jokes-tab"
                   >
                     Jokes
                   </span>
                   <span
-                    className={`text-lg font-medium cursor-pointer pb-1 border-b-2 transition-all ${activeTab === 'clips' ? 'text-white border-white' : 'text-gray-400 border-transparent hover:text-white'}`}
+                    className={`text-xl font-medium cursor-pointer pb-1 border-b-2 transition-all ${activeTab === 'clips' ? 'text-white border-white' : 'text-gray-400 border-transparent hover:text-white'}`}
                     onClick={() => setActiveTab('clips')}
                     data-testid="clips-tab"
                   >
@@ -303,34 +322,34 @@ export default function Home() {
                   </span>
                 </div>
                 <button 
-                  className="bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] px-6 py-2.5 rounded-full text-white font-medium flex items-center gap-2 hover:shadow-lg hover:shadow-indigo-500/30 transition-all hover:-translate-y-0.5"
+                  className="bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] px-7 py-3 rounded-full text-white font-medium text-base flex items-center gap-2 hover:shadow-lg hover:shadow-indigo-500/30 transition-all hover:-translate-y-0.5"
                   onClick={handlePostClick}
                   data-testid="post-btn"
                 >
-                  <Pencil size={15} />
+                  <Pencil size={18} />
                   Post
                 </button>
               </div>
 
               {/* Current Interest Tag */}
               {selectedInterest && (
-                <p className="text-[#6b7cff] text-base mt-2" data-testid="current-interest">#{selectedInterest}</p>
+                <p className="text-[#6b7cff] text-lg mt-3" data-testid="current-interest">#{selectedInterest}</p>
               )}
 
               {/* Posts */}
-              <div className="mt-6 space-y-6" data-testid="posts-container">
+              <div className="mt-8 space-y-8" data-testid="posts-container">
                 {posts.length === 0 ? (
-                  <div className="text-center text-gray-500 py-12" data-testid="no-posts">
+                  <div className="text-center text-gray-500 py-16 text-lg" data-testid="no-posts">
                     No {activeTab} found. Be the first to post!
                   </div>
                 ) : (
                   posts.map((post) => (
-                    <div key={post.id} className="pb-4 border-b border-[#252850]" data-testid={`post-${post.id}`}>
+                    <div key={post.id} className="pb-6 border-b border-[#252850]" data-testid={`post-${post.id}`}>
                       {/* Post Title */}
-                      <h3 className="text-white font-medium text-sm mb-3">{post.title}</h3>
+                      <h3 className="text-white font-medium text-lg mb-4">{post.title}</h3>
                       
                       {/* Media Area */}
-                      <div className="w-full max-w-[400px] rounded-lg mb-3 overflow-hidden border border-[#252850] bg-[#12152a]">
+                      <div className="w-full max-w-[450px] rounded-lg mb-4 overflow-hidden border border-[#252850] bg-[#12152a]">
                         {post.media ? (
                           post.type === 'clip' ? (
                             <video controls className="w-full">
@@ -340,7 +359,7 @@ export default function Home() {
                             <img src={post.media} alt={post.title} className="w-full object-cover" />
                           )
                         ) : (
-                          <div className="h-40 flex items-center justify-center text-gray-500 text-sm">
+                          <div className="h-44 flex items-center justify-center text-gray-500 text-base">
                             Image
                           </div>
                         )}
@@ -348,15 +367,15 @@ export default function Home() {
 
                       {/* Content */}
                       {post.content && (
-                        <p className="text-gray-400 text-[13px] leading-relaxed mb-3 max-w-[400px]">{post.content}</p>
+                        <p className="text-gray-400 text-base leading-relaxed mb-4 max-w-[450px]">{post.content}</p>
                       )}
 
                       {/* Tags */}
-                      <div className="flex gap-2 mb-3">
+                      <div className="flex gap-3 mb-4">
                         {post.tags && post.tags.map((tag, idx) => (
                           <span 
                             key={idx} 
-                            className="px-4 py-1 rounded-full text-xs text-gray-300 border border-[#3d4270] bg-[#1a1d3a] hover:border-[#5a6aff] transition-colors cursor-pointer"
+                            className="px-5 py-1.5 rounded-full text-sm text-gray-300 border border-[#3d4270] bg-[#1a1d3a] hover:border-[#5a6aff] transition-colors cursor-pointer"
                           >
                             {tag}
                           </span>
@@ -364,26 +383,26 @@ export default function Home() {
                       </div>
 
                       {/* Actions Row */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-between max-w-[450px]">
+                        <div className="flex items-center gap-3">
                           <button
-                            className={`p-1 transition-colors ${post.userVote === 'up' ? 'text-green-500' : 'text-gray-400 hover:text-white'}`}
+                            className={`p-1.5 transition-colors ${post.userVote === 'up' ? 'text-green-500' : 'text-gray-400 hover:text-white'}`}
                             onClick={() => handleVote(post.id, 'up')}
                             data-testid={`upvote-${post.id}`}
                           >
-                            <ArrowUp size={16} />
+                            <ArrowUp size={20} />
                           </button>
-                          <span className="text-gray-400 text-sm">{formatVotes(post.upvotes)}</span>
+                          <span className="text-gray-400 text-base">{formatVotes(post.upvotes)}</span>
                           <button
-                            className={`p-1 transition-colors ${post.userVote === 'down' ? 'text-red-500' : 'text-gray-400 hover:text-white'}`}
+                            className={`p-1.5 transition-colors ${post.userVote === 'down' ? 'text-red-500' : 'text-gray-400 hover:text-white'}`}
                             onClick={() => handleVote(post.id, 'down')}
                             data-testid={`downvote-${post.id}`}
                           >
-                            <ArrowDown size={16} />
+                            <ArrowDown size={20} />
                           </button>
                         </div>
-                        <button className="flex items-center gap-1.5 text-gray-400 hover:text-white text-sm transition-colors" data-testid={`share-${post.id}`}>
-                          <Share2 size={14} />
+                        <button className="flex items-center gap-2 text-gray-400 hover:text-white text-base transition-colors" data-testid={`share-${post.id}`}>
+                          <Share2 size={18} />
                           Share
                         </button>
                       </div>
@@ -395,22 +414,22 @@ export default function Home() {
           ) : (
             /* Add Post Form */
             <div data-testid="add-post-form">
-              <div className="flex items-center gap-6 mb-8">
+              <div className="flex items-center gap-6 mb-10">
                 <button 
                   className="text-white hover:text-gray-300 transition-colors"
                   onClick={() => setShowAddPost(false)}
                   data-testid="back-btn"
                 >
-                  <ArrowLeft size={22} />
+                  <ArrowLeft size={26} />
                 </button>
-                <h2 className="text-xl font-semibold text-white">Add Post</h2>
+                <h2 className="text-2xl font-semibold text-white">Add Post</h2>
               </div>
 
-              <form onSubmit={handleCreatePost} className="max-w-md mx-auto space-y-5">
+              <form onSubmit={handleCreatePost} className="max-w-lg mx-auto space-y-6">
                 {/* Interest Dropdown */}
                 <div className="relative">
                   <select
-                    className="w-full bg-[#5a6aff] text-white px-4 py-2.5 rounded-md appearance-none cursor-pointer text-sm font-medium pr-10"
+                    className="w-full bg-[#5a6aff] text-white px-5 py-3 rounded-md appearance-none cursor-pointer text-base font-medium pr-12"
                     value={postForm.interest}
                     onChange={(e) => setPostForm({ ...postForm, interest: e.target.value })}
                     data-testid="interest-select"
@@ -420,15 +439,15 @@ export default function Home() {
                       <option key={interest} value={interest}>{interest}</option>
                     ))}
                   </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-white pointer-events-none" size={18} />
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-white pointer-events-none" size={20} />
                 </div>
 
                 {/* Title Input */}
                 <div>
-                  <label className="block text-white text-sm font-medium mb-2">Title</label>
+                  <label className="block text-white text-base font-medium mb-2">Title</label>
                   <input
                     type="text"
-                    className="w-full bg-[#0d0f1e] border border-[#3d4270] rounded-md px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#5a6aff] transition-colors"
+                    className="w-full bg-[#0d0f1e] border border-[#3d4270] rounded-md px-5 py-3 text-white text-base focus:outline-none focus:border-[#5a6aff] transition-colors"
                     value={postForm.title}
                     onChange={(e) => setPostForm({ ...postForm, title: e.target.value })}
                     required
@@ -438,7 +457,7 @@ export default function Home() {
 
                 {/* Upload Button */}
                 <div>
-                  <label className="block w-full bg-[#1a1d3a] border border-[#3d4270] rounded-md px-4 py-3 text-gray-400 text-sm text-center cursor-pointer hover:border-[#5a6aff] transition-colors">
+                  <label className="block w-full bg-[#1a1d3a] border border-[#3d4270] rounded-md px-5 py-4 text-gray-400 text-base text-center cursor-pointer hover:border-[#5a6aff] transition-colors">
                     <input
                       type="file"
                       className="hidden"
@@ -449,34 +468,34 @@ export default function Home() {
                     {activeTab === 'jokes' ? 'Upload Image' : 'Upload Clip'}
                   </label>
                   {postForm.media && (
-                    <p className="text-sm text-green-500 mt-2 text-center">Media uploaded!</p>
+                    <p className="text-base text-green-500 mt-2 text-center">Media uploaded!</p>
                   )}
                 </div>
 
                 {/* Main Text - Only for Jokes */}
                 {activeTab === 'jokes' && (
                   <div>
-                    <label className="block text-white text-sm font-medium mb-2">Main Text</label>
+                    <label className="block text-white text-base font-medium mb-2">Main Text</label>
                     <textarea
-                      className="w-full bg-[#0d0f1e] border border-[#3d4270] rounded-md px-4 py-3 text-white text-sm focus:outline-none focus:border-[#5a6aff] transition-colors min-h-[100px] resize-vertical"
+                      className="w-full bg-[#0d0f1e] border border-[#3d4270] rounded-md px-5 py-4 text-white text-base focus:outline-none focus:border-[#5a6aff] transition-colors min-h-[120px] resize-vertical"
                       value={postForm.content}
                       onChange={(e) => setPostForm({ ...postForm, content: e.target.value.slice(0, 500) })}
                       maxLength={500}
                       data-testid="content-textarea"
                     />
-                    <p className="text-right text-xs text-gray-500 mt-1">{postForm.content.length}/500</p>
+                    <p className="text-right text-sm text-gray-500 mt-1">{postForm.content.length}/500</p>
                   </div>
                 )}
 
                 {/* Submit Button */}
-                <div className="flex justify-center pt-2">
+                <div className="flex justify-center pt-4">
                   <button
                     type="submit"
-                    className="bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] px-8 py-2.5 rounded-full text-white font-medium flex items-center gap-2 hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
+                    className="bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] px-10 py-3 rounded-full text-white font-medium text-base flex items-center gap-2 hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
                     disabled={loading}
                     data-testid="submit-post-btn"
                   >
-                    <Pencil size={15} />
+                    <Pencil size={18} />
                     {loading ? 'Posting...' : 'Post'}
                   </button>
                 </div>
@@ -489,18 +508,18 @@ export default function Home() {
       {/* Auth Modal */}
       {showAuth && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" onClick={() => setShowAuth(false)} data-testid="auth-modal">
-          <div className="bg-[#171932] border border-[#2d3154] rounded-xl p-8 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-2xl font-semibold text-white text-center mb-6">{isLogin ? 'Login' : 'Register'}</h2>
+          <div className="bg-[#171932] border border-[#2d3154] rounded-xl p-10 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-3xl font-semibold text-white text-center mb-8">{isLogin ? 'Sign In' : 'Sign Up'}</h2>
             
             {authError && (
-              <p className="text-red-500 text-sm text-center mb-4" data-testid="auth-error">{authError}</p>
+              <p className="text-red-500 text-base text-center mb-5" data-testid="auth-error">{authError}</p>
             )}
 
-            <form onSubmit={handleAuth} className="space-y-4">
+            <form onSubmit={handleAuth} className="space-y-5">
               {!isLogin && (
                 <input
                   type="text"
-                  className="w-full bg-[#0d0f1e] border border-[#3d4270] rounded-md px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#5a6aff] placeholder-gray-500"
+                  className="w-full bg-[#0d0f1e] border border-[#3d4270] rounded-md px-5 py-3 text-white text-base focus:outline-none focus:border-[#5a6aff] placeholder-gray-500"
                   placeholder="Username"
                   value={authForm.username}
                   onChange={(e) => setAuthForm({ ...authForm, username: e.target.value })}
@@ -510,7 +529,7 @@ export default function Home() {
               )}
               <input
                 type="email"
-                className="w-full bg-[#0d0f1e] border border-[#3d4270] rounded-md px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#5a6aff] placeholder-gray-500"
+                className="w-full bg-[#0d0f1e] border border-[#3d4270] rounded-md px-5 py-3 text-white text-base focus:outline-none focus:border-[#5a6aff] placeholder-gray-500"
                 placeholder="Email"
                 value={authForm.email}
                 onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })}
@@ -519,7 +538,7 @@ export default function Home() {
               />
               <input
                 type="password"
-                className="w-full bg-[#0d0f1e] border border-[#3d4270] rounded-md px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#5a6aff] placeholder-gray-500"
+                className="w-full bg-[#0d0f1e] border border-[#3d4270] rounded-md px-5 py-3 text-white text-base focus:outline-none focus:border-[#5a6aff] placeholder-gray-500"
                 placeholder="Password"
                 value={authForm.password}
                 onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })}
@@ -528,15 +547,15 @@ export default function Home() {
               />
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] py-2.5 rounded-full text-white font-medium hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
+                className="w-full bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] py-3 rounded-full text-white font-medium text-base hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
                 disabled={loading}
                 data-testid="auth-submit-btn"
               >
-                {loading ? 'Please wait...' : (isLogin ? 'Login' : 'Register')}
+                {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Sign Up')}
               </button>
             </form>
 
-            <p className="text-center text-sm text-gray-400 mt-5">
+            <p className="text-center text-base text-gray-400 mt-6">
               {isLogin ? "Don't have an account? " : "Already have an account? "}
               <button
                 className="text-[#5a6aff] hover:underline"
@@ -546,7 +565,7 @@ export default function Home() {
                 }}
                 data-testid="toggle-auth-btn"
               >
-                {isLogin ? 'Register' : 'Login'}
+                {isLogin ? 'Sign Up' : 'Sign In'}
               </button>
             </p>
           </div>
