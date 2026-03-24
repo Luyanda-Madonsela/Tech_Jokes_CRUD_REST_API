@@ -219,19 +219,19 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#0d0f1e]" data-testid="main-container">
       {/* Header */}
-      <header className="px-6 py-4 border-b border-[#1e2140]" data-testid="header">
+      <header className="px-6 py-5 border-b border-[#1e2140]" data-testid="header">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2" data-testid="logo">
-            <span className="font-mono font-bold text-2xl tracking-wider text-[#f5d742]" style={{textShadow: '1px 1px 0 #ff9800'}}>CRACK-A-GAG</span>
-            <span className="text-3xl">👋😊</span>
+          <div className="flex items-center gap-3" data-testid="logo">
+            <span className="font-mono font-bold text-3xl tracking-wider text-[#f5d742]" style={{textShadow: '2px 2px 0 #ff9800'}}>CRACK-A-GAG</span>
+            <span className="text-4xl">👋😊</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-5">
             {user ? (
               <>
-                <span className="text-base text-gray-300">Hi, {user.username}</span>
+                <span className="text-lg text-gray-300">Hi, {user.username}</span>
                 <button 
                   onClick={handleLogout}
-                  className="px-5 py-2 text-base text-gray-300 hover:text-white border border-[#3d4270] rounded-full hover:border-[#5a6aff] transition-all"
+                  className="px-6 py-2.5 text-lg text-gray-300 hover:text-white border border-[#3d4270] rounded-full hover:border-[#5a6aff] transition-all"
                   data-testid="logout-btn"
                 >
                   Logout
@@ -241,14 +241,14 @@ export default function Home() {
               <>
                 <button 
                   onClick={() => { setIsLogin(true); setShowAuth(true); }}
-                  className="px-5 py-2 text-base text-gray-300 hover:text-white border border-[#3d4270] rounded-full hover:border-[#5a6aff] transition-all"
+                  className="px-6 py-2.5 text-lg text-gray-300 hover:text-white border border-[#3d4270] rounded-full hover:border-[#5a6aff] transition-all"
                   data-testid="signin-btn"
                 >
                   Sign In
                 </button>
                 <button 
                   onClick={() => { setIsLogin(false); setShowAuth(true); }}
-                  className="px-5 py-2 text-base text-white bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] rounded-full hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
+                  className="px-6 py-2.5 text-lg text-white bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] rounded-full hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
                   data-testid="signup-btn"
                 >
                   Sign Up
@@ -257,38 +257,38 @@ export default function Home() {
             )}
           </div>
         </div>
-        <p className="text-xs text-[#ff5722] tracking-wide mt-1">laugh and learn tech</p>
+        <p className="text-sm text-[#ff5722] tracking-wide mt-1">laugh and learn tech</p>
       </header>
 
       <div className="flex">
         {/* Sidebar */}
         <aside className="w-72 px-6 py-6 flex-shrink-0" data-testid="sidebar">
-          <nav className="space-y-3">
+          <nav className="space-y-4">
             <div 
-              className={`flex items-center gap-3 py-2 cursor-pointer transition-colors text-base ${sortBy === 'trending' ? 'text-white' : 'text-gray-400 hover:text-white'}`}
+              className={`flex items-center gap-4 py-3 cursor-pointer transition-colors text-lg ${sortBy === 'trending' ? 'text-white' : 'text-gray-400 hover:text-white'}`}
               onClick={() => setSortBy('trending')}
               data-testid="trending-nav"
             >
-              <TrendingUp size={20} />
+              <TrendingUp size={24} />
               <span>Trending</span>
             </div>
             <div 
-              className={`flex items-center gap-3 py-2 cursor-pointer transition-colors text-base ${sortBy === 'top' ? 'text-white' : 'text-gray-400 hover:text-white'}`}
+              className={`flex items-center gap-4 py-3 cursor-pointer transition-colors text-lg ${sortBy === 'top' ? 'text-white' : 'text-gray-400 hover:text-white'}`}
               onClick={() => setSortBy('top')}
               data-testid="top-ranked-nav"
             >
-              <BarChart3 size={20} />
+              <BarChart3 size={24} />
               <span>Top Ranked</span>
             </div>
           </nav>
 
-          <div className="mt-8">
-            <h3 className="text-white font-medium mb-4 text-base">Interests</h3>
-            <div className="space-y-1">
+          <div className="mt-10">
+            <h3 className="text-white font-semibold mb-5 text-xl">Interests</h3>
+            <div className="space-y-2">
               {INTERESTS.map((interest, idx) => (
                 <div
                   key={idx}
-                  className={`py-2 pl-2 cursor-pointer transition-colors text-[15px] ${selectedInterest === interest ? 'text-white' : 'text-gray-400 hover:text-white'}`}
+                  className={`py-2.5 pl-3 cursor-pointer transition-colors text-lg ${selectedInterest === interest ? 'text-white' : 'text-gray-400 hover:text-white'}`}
                   onClick={() => setSelectedInterest(selectedInterest === interest ? null : interest)}
                   data-testid={`interest-${interest.toLowerCase().replace(/[^a-z]/g, '-')}`}
                 >
@@ -304,17 +304,17 @@ export default function Home() {
           {!showAddPost ? (
             <>
               {/* Tabs and Post Button */}
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex gap-8">
+              <div className="flex items-start justify-between mb-4 max-w-3xl mx-auto">
+                <div className="flex gap-10">
                   <span
-                    className={`text-xl font-medium cursor-pointer pb-1 border-b-2 transition-all ${activeTab === 'jokes' ? 'text-white border-white' : 'text-gray-400 border-transparent hover:text-white'}`}
+                    className={`text-2xl font-medium cursor-pointer pb-2 border-b-2 transition-all ${activeTab === 'jokes' ? 'text-white border-white' : 'text-gray-400 border-transparent hover:text-white'}`}
                     onClick={() => setActiveTab('jokes')}
                     data-testid="jokes-tab"
                   >
                     Jokes
                   </span>
                   <span
-                    className={`text-xl font-medium cursor-pointer pb-1 border-b-2 transition-all ${activeTab === 'clips' ? 'text-white border-white' : 'text-gray-400 border-transparent hover:text-white'}`}
+                    className={`text-2xl font-medium cursor-pointer pb-2 border-b-2 transition-all ${activeTab === 'clips' ? 'text-white border-white' : 'text-gray-400 border-transparent hover:text-white'}`}
                     onClick={() => setActiveTab('clips')}
                     data-testid="clips-tab"
                   >
@@ -322,45 +322,45 @@ export default function Home() {
                   </span>
                 </div>
                 <button 
-                  className="bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] px-7 py-3 rounded-full text-white font-medium text-base flex items-center gap-2 hover:shadow-lg hover:shadow-indigo-500/30 transition-all hover:-translate-y-0.5"
+                  className="bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] px-8 py-3.5 rounded-full text-white font-medium text-lg flex items-center gap-3 hover:shadow-lg hover:shadow-indigo-500/30 transition-all hover:-translate-y-0.5"
                   onClick={handlePostClick}
                   data-testid="post-btn"
                 >
-                  <Pencil size={18} />
+                  <Pencil size={20} />
                   Post
                 </button>
               </div>
 
               {/* Current Interest Tag */}
               {selectedInterest && (
-                <p className="text-[#6b7cff] text-lg mt-3" data-testid="current-interest">#{selectedInterest}</p>
+                <p className="text-[#6b7cff] text-xl mt-4 max-w-3xl mx-auto" data-testid="current-interest">#{selectedInterest}</p>
               )}
 
               {/* Posts */}
-              <div className="mt-8 space-y-8" data-testid="posts-container">
+              <div className="mt-8 space-y-10 max-w-3xl mx-auto" data-testid="posts-container">
                 {posts.length === 0 ? (
-                  <div className="text-center text-gray-500 py-16 text-lg" data-testid="no-posts">
+                  <div className="text-center text-gray-500 py-20 text-xl" data-testid="no-posts">
                     No {activeTab} found. Be the first to post!
                   </div>
                 ) : (
                   posts.map((post) => (
-                    <div key={post.id} className="pb-6 border-b border-[#252850]" data-testid={`post-${post.id}`}>
+                    <div key={post.id} className="pb-8 border-b border-[#252850]" data-testid={`post-${post.id}`}>
                       {/* Post Header - Title and Meta */}
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-white font-medium text-lg">{post.title}</h3>
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-white font-semibold text-2xl">{post.title}</h3>
                       </div>
                       
                       {/* Post Meta - User, Date, Time */}
-                      <div className="flex items-center gap-3 mb-4 text-gray-400 text-sm">
-                        <span className="text-[#6b7cff] font-medium">@{post.username}</span>
+                      <div className="flex items-center gap-4 mb-5 text-gray-400 text-base">
+                        <span className="text-[#6b7cff] font-medium text-lg">@{post.username}</span>
                         <span>•</span>
-                        <span>{new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                        <span className="text-lg">{new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                         <span>•</span>
-                        <span>{new Date(post.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+                        <span className="text-lg">{new Date(post.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
                       
                       {/* Media Area */}
-                      <div className="w-full max-w-[450px] rounded-lg mb-4 overflow-hidden border border-[#252850] bg-[#12152a]">
+                      <div className="w-full rounded-xl mb-5 overflow-hidden border border-[#252850] bg-[#12152a]">
                         {post.media ? (
                           post.type === 'clip' ? (
                             <video controls className="w-full">
@@ -370,7 +370,7 @@ export default function Home() {
                             <img src={post.media} alt={post.title} className="w-full object-cover" />
                           )
                         ) : (
-                          <div className="h-44 flex items-center justify-center text-gray-500 text-base">
+                          <div className="h-52 flex items-center justify-center text-gray-500 text-lg">
                             Image
                           </div>
                         )}
@@ -378,15 +378,15 @@ export default function Home() {
 
                       {/* Content */}
                       {post.content && (
-                        <p className="text-gray-400 text-base leading-relaxed mb-4 max-w-[450px]">{post.content}</p>
+                        <p className="text-gray-300 text-xl leading-relaxed mb-5">{post.content}</p>
                       )}
 
                       {/* Tags */}
-                      <div className="flex gap-3 mb-4">
+                      <div className="flex gap-4 mb-5">
                         {post.tags && post.tags.map((tag, idx) => (
                           <span 
                             key={idx} 
-                            className="px-5 py-1.5 rounded-full text-sm text-gray-300 border border-[#3d4270] bg-[#1a1d3a] hover:border-[#5a6aff] transition-colors cursor-pointer"
+                            className="px-6 py-2 rounded-full text-base text-gray-300 border border-[#3d4270] bg-[#1a1d3a] hover:border-[#5a6aff] transition-colors cursor-pointer"
                           >
                             {tag}
                           </span>
@@ -394,26 +394,26 @@ export default function Home() {
                       </div>
 
                       {/* Actions Row */}
-                      <div className="flex items-center justify-between max-w-[450px]">
-                        <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
                           <button
-                            className={`p-1.5 transition-colors ${post.userVote === 'up' ? 'text-green-500' : 'text-gray-400 hover:text-white'}`}
+                            className={`p-2 transition-colors ${post.userVote === 'up' ? 'text-green-500' : 'text-gray-400 hover:text-white'}`}
                             onClick={() => handleVote(post.id, 'up')}
                             data-testid={`upvote-${post.id}`}
                           >
-                            <ArrowUp size={20} />
+                            <ArrowUp size={24} />
                           </button>
-                          <span className="text-gray-400 text-base">{formatVotes(post.upvotes)}</span>
+                          <span className="text-gray-400 text-xl font-medium">{formatVotes(post.upvotes)}</span>
                           <button
-                            className={`p-1.5 transition-colors ${post.userVote === 'down' ? 'text-red-500' : 'text-gray-400 hover:text-white'}`}
+                            className={`p-2 transition-colors ${post.userVote === 'down' ? 'text-red-500' : 'text-gray-400 hover:text-white'}`}
                             onClick={() => handleVote(post.id, 'down')}
                             data-testid={`downvote-${post.id}`}
                           >
-                            <ArrowDown size={20} />
+                            <ArrowDown size={24} />
                           </button>
                         </div>
-                        <button className="flex items-center gap-2 text-gray-400 hover:text-white text-base transition-colors" data-testid={`share-${post.id}`}>
-                          <Share2 size={18} />
+                        <button className="flex items-center gap-2 text-gray-400 hover:text-white text-lg transition-colors" data-testid={`share-${post.id}`}>
+                          <Share2 size={22} />
                           Share
                         </button>
                       </div>
