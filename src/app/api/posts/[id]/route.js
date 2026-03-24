@@ -11,6 +11,10 @@ export async function PUT(request, { params }) {
     }
 
     const postId = parseInt(params.id);
+    const userId = Number(user.userId);
+    if (Number.isNaN(postId)) {
+      return NextResponse.json({ error: 'Invalid post id' }, { status: 400 });
+    }
     const { title, content, interest } = await request.json();
 
     // Check if post exists and belongs to user
@@ -18,7 +22,7 @@ export async function PUT(request, { params }) {
     if (!post) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
-    if (post.user_id !== user.userId) {
+    if (Number(post.user_id) !== userId) {
       return NextResponse.json({ error: 'Not authorized to edit this post' }, { status: 403 });
     }
 
@@ -50,13 +54,17 @@ export async function DELETE(request, { params }) {
     }
 
     const postId = parseInt(params.id);
+    const userId = Number(user.userId);
+    if (Number.isNaN(postId)) {
+      return NextResponse.json({ error: 'Invalid post id' }, { status: 400 });
+    }
 
     // Check if post exists and belongs to user
     const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(postId);
     if (!post) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
-    if (post.user_id !== user.userId) {
+    if (Number(post.user_id) !== userId) {
       return NextResponse.json({ error: 'Not authorized to delete this post' }, { status: 403 });
     }
 

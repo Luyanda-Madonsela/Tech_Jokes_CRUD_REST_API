@@ -224,16 +224,21 @@ export default function Home() {
     }
   };
 
+  const getAuthToken = () => token || localStorage.getItem('token');
+
   // Profile functions
   const fetchProfile = async () => {
-    if (!token) return;
+    const currentToken = getAuthToken();
+    if (!currentToken) return;
     try {
       const res = await fetch('/api/profile', {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${currentToken}` }
       });
       if (res.ok) {
         const data = await res.json();
         setProfilePosts(data.posts);
+      } else if (res.status === 401) {
+        setShowAuth(true);
       }
     } catch (error) {
       console.error('Failed to fetch profile:', error);
@@ -251,12 +256,17 @@ export default function Home() {
       alert('Username must be at least 3 characters');
       return;
     }
+    const currentToken = getAuthToken();
+    if (!currentToken) {
+      setShowAuth(true);
+      return;
+    }
     try {
       const res = await fetch('/api/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${currentToken}`
         },
         body: JSON.stringify({ username: newUsername })
       });
@@ -276,17 +286,29 @@ export default function Home() {
 
   const handleDeletePost = async (postId) => {
     if (!confirm('Are you sure you want to delete this post?')) return;
+    const currentToken = getAuthToken();
+    if (!currentToken) {
+      setShowAuth(true);
+      return;
+    }
     try {
       const res = await fetch(`/api/posts/${postId}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${currentToken}` }
       });
       if (res.ok) {
         setProfilePosts(profilePosts.filter(p => p.id !== postId));
         fetchPosts(); // Refresh main posts list
+      } else {
+        const error = await res.json().catch(() => ({}));
+        alert(error.error || 'Failed to delete post');
+        if (res.status === 401) {
+          setShowAuth(true);
+        }
       }
     } catch (error) {
       console.error('Delete post failed:', error);
+      alert('Delete request failed. Please try again.');
     }
   };
 
@@ -297,12 +319,17 @@ export default function Home() {
 
   const handleSaveEdit = async () => {
     if (!editingPost) return;
+    const currentToken = getAuthToken();
+    if (!currentToken) {
+      setShowAuth(true);
+      return;
+    }
     try {
       const res = await fetch(`/api/posts/${editingPost.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${currentToken}`
         },
         body: JSON.stringify(editPostForm)
       });
@@ -311,9 +338,16 @@ export default function Home() {
         setProfilePosts(profilePosts.map(p => p.id === editingPost.id ? updatedPost : p));
         setEditingPost(null);
         fetchPosts(); // Refresh main posts list
+      } else {
+        const error = await res.json().catch(() => ({}));
+        alert(error.error || 'Failed to update post');
+        if (res.status === 401) {
+          setShowAuth(true);
+        }
       }
     } catch (error) {
       console.error('Edit post failed:', error);
+      alert('Update request failed. Please try again.');
     }
   };
 

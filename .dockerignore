@@ -1,0 +1,10 @@
+node_modules
+.next
+.git
+.gitignore
+README.md
+backend
+backend_test.py
+test_reports
+memory
+npm-debug.log*

@@ -1,12 +1,13 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import bcrypt from 'bcryptjs';
+import { mkdirSync, existsSync } from 'fs';
 
-const dbPath = path.join(process.cwd(), 'data', 'crackagag.db');
+const defaultDbPath = path.join(process.cwd(), 'data', 'crackagag.db');
+const dbPath = process.env.DB_PATH || defaultDbPath;
 
 // Ensure data directory exists
-import { mkdirSync, existsSync } from 'fs';
-const dataDir = path.join(process.cwd(), 'data');
+const dataDir = path.dirname(dbPath);
 if (!existsSync(dataDir)) {
   mkdirSync(dataDir, { recursive: true });
 }
