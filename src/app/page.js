@@ -304,7 +304,7 @@ export default function Home() {
           {!showAddPost ? (
             <>
               {/* Fixed Tabs Section */}
-              <div className="sticky top-[72px] z-30 bg-[#0d0f1e] px-8 py-4">
+              <div className="sticky top-[72px] z-30 bg-[#0d0f1e] px-8 pt-8 pb-4">
                 {/* Tabs and Post Button */}
                 <div className="flex items-start justify-between mb-2 max-w-2xl mx-auto">
                   <div className="flex gap-6">
