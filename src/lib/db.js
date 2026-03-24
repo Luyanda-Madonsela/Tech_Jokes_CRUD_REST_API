@@ -34,6 +34,8 @@ db.exec(`
     tags TEXT,
     upvotes INTEGER DEFAULT 0,
     downvotes INTEGER DEFAULT 0,
+    edited INTEGER DEFAULT 0,
+    edited_at DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
   );
@@ -54,6 +56,14 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_posts_upvotes ON posts(upvotes DESC);
   CREATE INDEX IF NOT EXISTS idx_votes_user_post ON votes(user_id, post_id);
 `);
+
+// Add edited columns if they don't exist (migration)
+try {
+  db.exec('ALTER TABLE posts ADD COLUMN edited INTEGER DEFAULT 0');
+} catch (e) { /* column already exists */ }
+try {
+  db.exec('ALTER TABLE posts ADD COLUMN edited_at DATETIME');
+} catch (e) { /* column already exists */ }
 
 // Seed sample data if empty
 const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();

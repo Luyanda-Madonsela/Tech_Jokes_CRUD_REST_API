@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { TrendingUp, BarChart3, Pencil, ArrowUp, ArrowDown, Share2, ArrowLeft, ChevronDown } from 'lucide-react';
+import { TrendingUp, BarChart3, Pencil, ArrowUp, ArrowDown, Share2, ArrowLeft, ChevronDown, User, Trash2, Edit3 } from 'lucide-react';
 
 const INTERESTS = [
   'Programming',
@@ -25,11 +25,19 @@ export default function Home() {
   const [selectedInterest, setSelectedInterest] = useState('Cyber Security');
   const [sortBy, setSortBy] = useState('trending');
   const [showAddPost, setShowAddPost] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // Profile state
+  const [profilePosts, setProfilePosts] = useState([]);
+  const [editingUsername, setEditingUsername] = useState(false);
+  const [newUsername, setNewUsername] = useState('');
+  const [editingPost, setEditingPost] = useState(null);
+  const [editPostForm, setEditPostForm] = useState({ title: '', content: '', interest: '' });
 
   // Auth form state
   const [authForm, setAuthForm] = useState({ username: '', email: '', password: '' });
@@ -216,6 +224,99 @@ export default function Home() {
     }
   };
 
+  // Profile functions
+  const fetchProfile = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch('/api/profile', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setProfilePosts(data.posts);
+      }
+    } catch (error) {
+      console.error('Failed to fetch profile:', error);
+    }
+  };
+
+  const handleShowProfile = () => {
+    setShowProfile(true);
+    setShowAddPost(false);
+    fetchProfile();
+  };
+
+  const handleUpdateUsername = async () => {
+    if (!newUsername.trim() || newUsername.length < 3) {
+      alert('Username must be at least 3 characters');
+      return;
+    }
+    try {
+      const res = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ username: newUsername })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        setEditingUsername(false);
+      } else {
+        const error = await res.json();
+        alert(error.error || 'Failed to update username');
+      }
+    } catch (error) {
+      console.error('Update username failed:', error);
+    }
+  };
+
+  const handleDeletePost = async (postId) => {
+    if (!confirm('Are you sure you want to delete this post?')) return;
+    try {
+      const res = await fetch(`/api/posts/${postId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setProfilePosts(profilePosts.filter(p => p.id !== postId));
+        fetchPosts(); // Refresh main posts list
+      }
+    } catch (error) {
+      console.error('Delete post failed:', error);
+    }
+  };
+
+  const handleEditPost = (post) => {
+    setEditingPost(post);
+    setEditPostForm({ title: post.title, content: post.content || '', interest: post.interest });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingPost) return;
+    try {
+      const res = await fetch(`/api/posts/${editingPost.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(editPostForm)
+      });
+      if (res.ok) {
+        const updatedPost = await res.json();
+        setProfilePosts(profilePosts.map(p => p.id === editingPost.id ? updatedPost : p));
+        setEditingPost(null);
+        fetchPosts(); // Refresh main posts list
+      }
+    } catch (error) {
+      console.error('Edit post failed:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0d0f1e]" data-testid="main-container">
       {/* Header - Fixed */}
@@ -231,7 +332,14 @@ export default function Home() {
           <div className="flex items-center gap-4">
             {user ? (
               <>
-                <span className="text-sm text-gray-300">Hi, {user.username}</span>
+                <button 
+                  onClick={handleShowProfile}
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:text-white border border-[#3d4270] rounded-full hover:border-[#5a6aff] transition-all"
+                  data-testid="profile-btn"
+                >
+                  <User size={16} />
+                  {user.username}
+                </button>
                 <button 
                   onClick={handleLogout}
                   className="px-5 py-2 text-sm text-gray-300 hover:text-white border border-[#3d4270] rounded-full hover:border-[#5a6aff] transition-all"
@@ -303,7 +411,161 @@ export default function Home() {
 
         {/* Main Content - Scrollable */}
         <main className="flex-1 ml-64 min-h-[calc(100vh-72px)]" data-testid="main-content">
-          {!showAddPost ? (
+          {showProfile ? (
+            /* Profile View */
+            <div className="pt-8 px-8" data-testid="profile-view">
+              <div className="flex items-center mb-8">
+                <button 
+                  className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+                  onClick={() => setShowProfile(false)}
+                  data-testid="profile-back-btn"
+                >
+                  <ArrowLeft size={24} />
+                  <span className="text-lg">Back</span>
+                </button>
+                <h2 className="text-2xl font-semibold text-white flex-1 text-center pr-20">My Profile</h2>
+              </div>
+
+              {/* Username Section */}
+              <div className="max-w-2xl mx-auto mb-8 p-6 bg-[#171932] rounded-lg border border-[#2d3154]">
+                <h3 className="text-lg font-medium text-white mb-4">Username</h3>
+                {editingUsername ? (
+                  <div className="flex gap-3">
+                    <input
+                      type="text"
+                      className="flex-1 bg-[#0d0f1e] border border-[#3d4270] rounded-md px-4 py-2 text-white text-sm focus:outline-none focus:border-[#5a6aff]"
+                      value={newUsername}
+                      onChange={(e) => setNewUsername(e.target.value)}
+                      placeholder="Enter new username"
+                      data-testid="new-username-input"
+                    />
+                    <button
+                      onClick={handleUpdateUsername}
+                      className="px-4 py-2 bg-[#5a6aff] text-white rounded-md text-sm hover:bg-[#4f5de0] transition-colors"
+                      data-testid="save-username-btn"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setEditingUsername(false)}
+                      className="px-4 py-2 border border-[#3d4270] text-gray-400 rounded-md text-sm hover:text-white transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-300 text-lg">@{user?.username}</span>
+                    <button
+                      onClick={() => { setNewUsername(user?.username || ''); setEditingUsername(true); }}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-400 hover:text-white border border-[#3d4270] rounded-md hover:border-[#5a6aff] transition-all"
+                      data-testid="edit-username-btn"
+                    >
+                      <Edit3 size={14} />
+                      Change
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* User Posts */}
+              <div className="max-w-2xl mx-auto">
+                <h3 className="text-lg font-medium text-white mb-4">My Posts ({profilePosts.length})</h3>
+                
+                {profilePosts.length === 0 ? (
+                  <div className="text-center text-gray-500 py-12">
+                    You haven't posted anything yet.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {profilePosts.map((post) => (
+                      <div key={post.id} className="p-4 bg-[#171932] rounded-lg border border-[#2d3154]" data-testid={`profile-post-${post.id}`}>
+                        {editingPost?.id === post.id ? (
+                          /* Edit Mode */
+                          <div className="space-y-3">
+                            <input
+                              type="text"
+                              className="w-full bg-[#0d0f1e] border border-[#3d4270] rounded-md px-4 py-2 text-white text-sm focus:outline-none focus:border-[#5a6aff]"
+                              value={editPostForm.title}
+                              onChange={(e) => setEditPostForm({ ...editPostForm, title: e.target.value })}
+                              placeholder="Title"
+                            />
+                            <textarea
+                              className="w-full bg-[#0d0f1e] border border-[#3d4270] rounded-md px-4 py-2 text-white text-sm focus:outline-none focus:border-[#5a6aff] min-h-[80px]"
+                              value={editPostForm.content}
+                              onChange={(e) => setEditPostForm({ ...editPostForm, content: e.target.value })}
+                              placeholder="Content"
+                            />
+                            <select
+                              className="w-full bg-[#0d0f1e] border border-[#3d4270] rounded-md px-4 py-2 text-white text-sm focus:outline-none focus:border-[#5a6aff]"
+                              value={editPostForm.interest}
+                              onChange={(e) => setEditPostForm({ ...editPostForm, interest: e.target.value })}
+                            >
+                              {INTERESTS.filter((v, i, a) => a.indexOf(v) === i).map((interest) => (
+                                <option key={interest} value={interest}>{interest}</option>
+                              ))}
+                            </select>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={handleSaveEdit}
+                                className="px-4 py-2 bg-[#5a6aff] text-white rounded-md text-sm hover:bg-[#4f5de0] transition-colors"
+                              >
+                                Save Changes
+                              </button>
+                              <button
+                                onClick={() => setEditingPost(null)}
+                                className="px-4 py-2 border border-[#3d4270] text-gray-400 rounded-md text-sm hover:text-white transition-colors"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          /* View Mode */
+                          <>
+                            <div className="flex items-start justify-between mb-2">
+                              <div>
+                                <h4 className="text-white font-medium">
+                                  {post.title}
+                                  {post.edited === 1 && <span className="text-gray-500 text-sm ml-2">(edited)</span>}
+                                </h4>
+                                <p className="text-xs text-gray-500">
+                                  {post.type === 'joke' ? 'Joke' : 'Clip'} • {post.interest} • {new Date(post.created_at).toLocaleDateString()}
+                                </p>
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleEditPost(post)}
+                                  className="p-2 text-gray-400 hover:text-[#5a6aff] transition-colors"
+                                  data-testid={`edit-post-${post.id}`}
+                                >
+                                  <Edit3 size={16} />
+                                </button>
+                                <button
+                                  onClick={() => handleDeletePost(post.id)}
+                                  className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                  data-testid={`delete-post-${post.id}`}
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </div>
+                            {post.content && (
+                              <p className="text-gray-400 text-sm">{post.content}</p>
+                            )}
+                            <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                              <span>{post.upvotes} upvotes</span>
+                              <span>{post.downvotes} downvotes</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : !showAddPost ? (
             <>
               {/* Fixed Tabs Section */}
               <div className="sticky top-[72px] z-30 bg-[#0d0f1e] px-8 pt-8 pb-4">
@@ -353,7 +615,10 @@ export default function Home() {
                     <div key={post.id} className="pb-5 border-b border-[#252850]" data-testid={`post-${post.id}`}>
                       {/* Post Header - Title and Meta */}
                       <div className="flex items-center justify-between mb-1">
-                        <h3 className="text-white font-medium text-base">{post.title}</h3>
+                        <h3 className="text-white font-medium text-base">
+                          {post.title}
+                          {post.edited === 1 && <span className="text-gray-500 text-xs ml-2">(edited)</span>}
+                        </h3>
                       </div>
                       
                       {/* Post Meta - User, Date, Time */}
