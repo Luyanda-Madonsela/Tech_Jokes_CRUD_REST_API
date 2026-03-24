@@ -219,11 +219,14 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#0d0f1e]" data-testid="main-container">
       {/* Header - Fixed */}
-      <header className="fixed top-0 left-0 right-0 z-40 px-6 py-4 border-b border-[#1e2140] bg-[#0d0f1e]" data-testid="header">
+      <header className="fixed top-0 left-0 right-0 z-40 px-6 py-3 border-b border-[#1e2140] bg-[#0d0f1e]" data-testid="header">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2" data-testid="logo">
-            <span className="font-mono font-bold text-2xl tracking-wider text-[#f5d742]" style={{textShadow: '1px 1px 0 #ff9800'}}>CRACK-A-GAG</span>
-            <span className="text-3xl">👋😊</span>
+          <div className="flex items-center" data-testid="logo">
+            <img 
+              src="https://customer-assets.emergentagent.com/job_joke-vault-app/artifacts/6z202jm3_Component%207.png" 
+              alt="CRACK-A-GAG - laugh and learn tech" 
+              className="h-12 object-contain"
+            />
           </div>
           <div className="flex items-center gap-4">
             {user ? (
@@ -257,7 +260,6 @@ export default function Home() {
             )}
           </div>
         </div>
-        <p className="text-[10px] text-[#ff5722] tracking-wide mt-1">laugh and learn tech</p>
       </header>
 
       <div className="flex pt-[72px]">
