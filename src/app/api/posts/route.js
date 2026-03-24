@@ -18,9 +18,11 @@ export async function GET(request) {
     }
     
     if (sort === 'trending') {
-      query += ' ORDER BY p.created_at DESC';
+      query += ' ORDER BY p.created_at DESC, p.id DESC';
     } else if (sort === 'top') {
-      query += ' ORDER BY p.upvotes DESC';
+      query += ' ORDER BY p.upvotes DESC, p.created_at DESC, p.id DESC';
+    } else {
+      query += ' ORDER BY p.created_at DESC, p.id DESC';
     }
     
     const posts = db.prepare(query).all(...params);
