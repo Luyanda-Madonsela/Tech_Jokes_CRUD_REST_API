@@ -345,8 +345,19 @@ export default function Home() {
                 ) : (
                   posts.map((post) => (
                     <div key={post.id} className="pb-6 border-b border-[#252850]" data-testid={`post-${post.id}`}>
-                      {/* Post Title */}
-                      <h3 className="text-white font-medium text-lg mb-4">{post.title}</h3>
+                      {/* Post Header - Title and Meta */}
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-white font-medium text-lg">{post.title}</h3>
+                      </div>
+                      
+                      {/* Post Meta - User, Date, Time */}
+                      <div className="flex items-center gap-3 mb-4 text-gray-400 text-sm">
+                        <span className="text-[#6b7cff] font-medium">@{post.username}</span>
+                        <span>•</span>
+                        <span>{new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                        <span>•</span>
+                        <span>{new Date(post.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
                       
                       {/* Media Area */}
                       <div className="w-full max-w-[450px] rounded-lg mb-4 overflow-hidden border border-[#252850] bg-[#12152a]">
