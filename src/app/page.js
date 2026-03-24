@@ -311,14 +311,14 @@ export default function Home() {
                 <div className="flex items-start justify-between mb-2 max-w-2xl mx-auto">
                   <div className="flex gap-6">
                     <span
-                      className={`text-base font-medium cursor-pointer pb-1 border-b-2 transition-all ${activeTab === 'jokes' ? 'text-white border-white' : 'text-gray-400 border-transparent hover:text-white'}`}
+                      className={`text-xl font-medium cursor-pointer pb-1 border-b-2 transition-all ${activeTab === 'jokes' ? 'text-white border-white' : 'text-gray-400 border-transparent hover:text-white'}`}
                       onClick={() => setActiveTab('jokes')}
                       data-testid="jokes-tab"
                     >
                       Jokes
                     </span>
                     <span
-                      className={`text-base font-medium cursor-pointer pb-1 border-b-2 transition-all ${activeTab === 'clips' ? 'text-white border-white' : 'text-gray-400 border-transparent hover:text-white'}`}
+                      className={`text-xl font-medium cursor-pointer pb-1 border-b-2 transition-all ${activeTab === 'clips' ? 'text-white border-white' : 'text-gray-400 border-transparent hover:text-white'}`}
                       onClick={() => setActiveTab('clips')}
                       data-testid="clips-tab"
                     >
@@ -438,9 +438,9 @@ export default function Home() {
                   onClick={() => setShowAddPost(false)}
                   data-testid="back-btn"
                 >
-                  <ArrowLeft size={20} />
+                  <ArrowLeft size={24} />
                 </button>
-                <h2 className="text-xl font-semibold text-white">Add Post</h2>
+                <h2 className="text-2xl font-semibold text-white">Add Post</h2>
               </div>
 
               <form onSubmit={handleCreatePost} className="max-w-md mx-auto space-y-4">
