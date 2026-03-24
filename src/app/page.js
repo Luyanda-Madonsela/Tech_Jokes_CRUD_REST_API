@@ -121,7 +121,9 @@ export default function Home() {
   };
 
   const handleVote = async (postId, voteType) => {
-    if (!token) {
+    // Check both state and localStorage for token
+    const currentToken = token || localStorage.getItem('token');
+    if (!currentToken) {
       setShowAuth(true);
       return;
     }
@@ -131,10 +133,16 @@ export default function Home() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${currentToken}`
         },
         body: JSON.stringify({ voteType })
       });
+
+      if (res.status === 401) {
+        // Token expired or invalid
+        setShowAuth(true);
+        return;
+      }
 
       if (res.ok) {
         const data = await res.json();
