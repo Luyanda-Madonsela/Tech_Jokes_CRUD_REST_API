@@ -429,7 +429,7 @@ export default function Home() {
             </>
           ) : (
             /* Add Post Form */
-            <div data-testid="add-post-form">
+            <div className="pt-8" data-testid="add-post-form">
               <div className="flex items-center gap-5 mb-8">
                 <button 
                   className="text-white hover:text-gray-300 transition-colors"
