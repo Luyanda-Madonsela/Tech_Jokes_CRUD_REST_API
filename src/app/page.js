@@ -268,7 +268,7 @@ export default function Home() {
           <nav className="space-y-2">
             <div 
               className={`flex items-center gap-3 py-2 cursor-pointer transition-colors text-sm ${sortBy === 'trending' ? 'text-white' : 'text-gray-400 hover:text-white'}`}
-              onClick={() => setSortBy('trending')}
+              onClick={() => { setSortBy('trending'); setSelectedInterest(null); }}
               data-testid="trending-nav"
             >
               <TrendingUp size={18} />
@@ -276,7 +276,7 @@ export default function Home() {
             </div>
             <div 
               className={`flex items-center gap-3 py-2 cursor-pointer transition-colors text-sm ${sortBy === 'top' ? 'text-white' : 'text-gray-400 hover:text-white'}`}
-              onClick={() => setSortBy('top')}
+              onClick={() => { setSortBy('top'); setSelectedInterest(null); }}
               data-testid="top-ranked-nav"
             >
               <BarChart3 size={18} />
