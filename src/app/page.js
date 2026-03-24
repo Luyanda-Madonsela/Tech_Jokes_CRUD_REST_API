@@ -300,44 +300,48 @@ export default function Home() {
         </aside>
 
         {/* Main Content - Scrollable */}
-        <main className="flex-1 ml-64 px-8 py-5 min-h-[calc(100vh-72px)]" data-testid="main-content">
+        <main className="flex-1 ml-64 min-h-[calc(100vh-72px)]" data-testid="main-content">
           {!showAddPost ? (
             <>
-              {/* Tabs and Post Button */}
-              <div className="flex items-start justify-between mb-2 max-w-2xl mx-auto">
-                <div className="flex gap-6">
-                  <span
-                    className={`text-base font-medium cursor-pointer pb-1 border-b-2 transition-all ${activeTab === 'jokes' ? 'text-white border-white' : 'text-gray-400 border-transparent hover:text-white'}`}
-                    onClick={() => setActiveTab('jokes')}
-                    data-testid="jokes-tab"
+              {/* Fixed Tabs Section */}
+              <div className="sticky top-[72px] z-30 bg-[#0d0f1e] px-8 py-4 border-b border-[#1e2140]">
+                {/* Tabs and Post Button */}
+                <div className="flex items-start justify-between mb-2 max-w-2xl mx-auto">
+                  <div className="flex gap-6">
+                    <span
+                      className={`text-base font-medium cursor-pointer pb-1 border-b-2 transition-all ${activeTab === 'jokes' ? 'text-white border-white' : 'text-gray-400 border-transparent hover:text-white'}`}
+                      onClick={() => setActiveTab('jokes')}
+                      data-testid="jokes-tab"
+                    >
+                      Jokes
+                    </span>
+                    <span
+                      className={`text-base font-medium cursor-pointer pb-1 border-b-2 transition-all ${activeTab === 'clips' ? 'text-white border-white' : 'text-gray-400 border-transparent hover:text-white'}`}
+                      onClick={() => setActiveTab('clips')}
+                      data-testid="clips-tab"
+                    >
+                      Clips
+                    </span>
+                  </div>
+                  <button 
+                    className="bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] px-5 py-2 rounded-full text-white font-medium text-sm flex items-center gap-2 hover:shadow-lg hover:shadow-indigo-500/30 transition-all hover:-translate-y-0.5"
+                    onClick={handlePostClick}
+                    data-testid="post-btn"
                   >
-                    Jokes
-                  </span>
-                  <span
-                    className={`text-base font-medium cursor-pointer pb-1 border-b-2 transition-all ${activeTab === 'clips' ? 'text-white border-white' : 'text-gray-400 border-transparent hover:text-white'}`}
-                    onClick={() => setActiveTab('clips')}
-                    data-testid="clips-tab"
-                  >
-                    Clips
-                  </span>
+                    <Pencil size={14} />
+                    Post
+                  </button>
                 </div>
-                <button 
-                  className="bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] px-5 py-2 rounded-full text-white font-medium text-sm flex items-center gap-2 hover:shadow-lg hover:shadow-indigo-500/30 transition-all hover:-translate-y-0.5"
-                  onClick={handlePostClick}
-                  data-testid="post-btn"
-                >
-                  <Pencil size={14} />
-                  Post
-                </button>
+
+                {/* Current Interest Tag */}
+                {selectedInterest && (
+                  <p className="text-[#6b7cff] text-sm max-w-2xl mx-auto" data-testid="current-interest">#{selectedInterest}</p>
+                )}
               </div>
 
-              {/* Current Interest Tag */}
-              {selectedInterest && (
-                <p className="text-[#6b7cff] text-sm mt-2 max-w-2xl mx-auto" data-testid="current-interest">#{selectedInterest}</p>
-              )}
-
-              {/* Posts */}
-              <div className="mt-6 space-y-6 max-w-2xl mx-auto" data-testid="posts-container">
+              {/* Posts - Scrollable */}
+              <div className="px-8 py-5">
+                <div className="space-y-6 max-w-2xl mx-auto" data-testid="posts-container">
                 {posts.length === 0 ? (
                   <div className="text-center text-gray-500 py-12 text-sm" data-testid="no-posts">
                     No {activeTab} found. Be the first to post!
@@ -421,6 +425,7 @@ export default function Home() {
                   ))
                 )}
               </div>
+            </div>
             </>
           ) : (
             /* Add Post Form */
