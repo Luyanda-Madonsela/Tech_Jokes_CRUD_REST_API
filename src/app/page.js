@@ -225,7 +225,7 @@ export default function Home() {
             <img 
               src="https://customer-assets.emergentagent.com/job_joke-vault-app/artifacts/6z202jm3_Component%207.png" 
               alt="CRACK-A-GAG - laugh and learn tech" 
-              className="h-12 object-contain"
+              className="h-16 object-contain"
             />
           </div>
           <div className="flex items-center gap-4">
