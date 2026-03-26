@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, BarChart3, Pencil, Share2, ArrowLeft, ChevronDown, User, Trash2, Edit3, Sun, Moon, Shield } from 'lucide-react';
 
@@ -20,7 +20,7 @@ const INTERESTS = [
 ];
 
 const HILARITY_LEVELS = [
-  { level: 1, emoji: '😅', label: 'Mild' },
+  { level: 1, emoji: '😊', label: 'Mild' },
   { level: 2, emoji: '😄', label: 'Funny' },
   { level: 3, emoji: '😆', label: 'Very Funny' },
   { level: 4, emoji: '😂', label: 'Hilarious' },
@@ -88,6 +88,7 @@ export default function Home() {
     interest: 'Programming',
     tags: ''
   });
+  const clipVideoRefs = useRef({});
   const [videoLoadingMap, setVideoLoadingMap] = useState({});
   const [adminUsers, setAdminUsers] = useState([]);
   const [adminLoading, setAdminLoading] = useState(false);
@@ -135,6 +136,47 @@ export default function Home() {
       return next;
     });
   }, [posts]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const video = entry.target;
+          if (entry.isIntersecting) {
+            const playPromise = video.play();
+            if (playPromise?.catch) {
+              playPromise.catch(() => {});
+            }
+          } else {
+            video.pause();
+            try {
+              video.currentTime = 0;
+            } catch {
+              // Ignore seek errors if metadata is not ready yet.
+            }
+          }
+        });
+      },
+      {
+        threshold: 0.6
+      }
+    );
+
+    Object.values(clipVideoRefs.current).forEach((video) => {
+      if (video) {
+        observer.observe(video);
+      }
+    });
+
+    return () => {
+      observer.disconnect();
+      Object.values(clipVideoRefs.current).forEach((video) => {
+        if (video && !video.paused) {
+          video.pause();
+        }
+      });
+    };
+  }, [posts, activeTab]);
 
   const fetchPosts = async () => {
     try {
@@ -707,6 +749,14 @@ export default function Home() {
     setVideoLoadingMap((prev) => ({ ...prev, [postId]: false }));
   };
 
+  const setClipVideoRef = (postId) => (videoEl) => {
+    if (videoEl) {
+      clipVideoRefs.current[postId] = videoEl;
+    } else {
+      delete clipVideoRefs.current[postId];
+    }
+  };
+
   const handleSaveEdit = async () => {
     if (!editingPost) return;
     const currentToken = getAuthToken();
@@ -1211,115 +1261,170 @@ export default function Home() {
                 ) : (
                   posts.map((post) => (
                     <div key={post.id} className={`pb-5 border-b ${theme === 'dark' ? 'border-[#252850]' : 'border-gray-200'}`} data-testid={`post-${post.id}`}>
-                      {/* Post Header - Title and Meta */}
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-1">
-                        <h3 className={`font-medium text-base break-words ${theme === 'dark' ? 'text-white' : 'text-black'}`}>
-                          {post.title}
-                          {post.edited === 1 && <span className={`text-xs ml-2 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>(edited)</span>}
-                        </h3>
-                      </div>
-                      
-                      {/* Post Meta - User, Date, Time */}
-                      <div className={`flex flex-wrap items-center gap-1 md:gap-2 mb-3 text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                        <span className={`font-medium ${theme === 'dark' ? 'text-[#6b7cff]' : 'text-blue-600'}`}>@{post.username}</span>
-                        <span className="hidden sm:inline">•</span>
-                        <span>{new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                        <span className="hidden sm:inline">•</span>
-                        <span>{new Date(post.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
-                      </div>
-                      
-                      {/* Media Area */}
-                      <div className={`w-full rounded-lg mb-3 overflow-hidden border ${theme === 'dark' ? 'border-[#252850] bg-[#12152a]' : 'border-gray-200 bg-gray-50'}`}>
-                        {post.media ? (
-                          post.type === 'clip' ? (
-                            <div className="relative w-full bg-black h-64 md:h-96">
-                              <video 
-                                controls 
-                                className="w-full h-full"
-                                preload="metadata"
-                                onCanPlay={() => handleVideoPlayable(post.id)}
-                                onError={() => handleVideoPlayable(post.id)}
-                              >
-                                <source src={post.media} />
-                              </video>
-                              {videoLoadingMap[post.id] !== false && (
-                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/20">
-                                  <div className="w-12 h-12 border-4 border-gray-400 border-t-white rounded-full animate-spin"></div>
+                      {editingPost?.id === post.id ? (
+                        <div className="space-y-3">
+                          <input
+                            type="text"
+                            className={`w-full border rounded-md px-4 py-2 text-sm focus:outline-none transition-colors ${theme === 'dark' ? 'bg-[#0d0f1e] border-[#3d4270] text-white focus:border-[#5a6aff]' : 'bg-white border-gray-300 text-black focus:border-blue-500'}`}
+                            value={editPostForm.title}
+                            onChange={(e) => setEditPostForm({ ...editPostForm, title: e.target.value })}
+                            placeholder="Title"
+                          />
+                          <textarea
+                            className={`w-full border rounded-md px-4 py-2 text-sm focus:outline-none transition-colors min-h-[90px] ${theme === 'dark' ? 'bg-[#0d0f1e] border-[#3d4270] text-white focus:border-[#5a6aff]' : 'bg-white border-gray-300 text-black focus:border-blue-500'}`}
+                            value={editPostForm.content}
+                            onChange={(e) => setEditPostForm({ ...editPostForm, content: e.target.value })}
+                            placeholder="Content"
+                          />
+                          <select
+                            className={`w-full border rounded-md px-4 py-2 text-sm focus:outline-none transition-colors ${theme === 'dark' ? 'bg-[#0d0f1e] border-[#3d4270] text-white focus:border-[#5a6aff]' : 'bg-white border-gray-300 text-black focus:border-blue-500'}`}
+                            value={editPostForm.interest}
+                            onChange={(e) => setEditPostForm({ ...editPostForm, interest: e.target.value })}
+                          >
+                            {INTERESTS.filter((v, i, a) => a.indexOf(v) === i).map((interest) => (
+                              <option key={interest} value={interest}>{interest}</option>
+                            ))}
+                          </select>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={handleSaveEdit}
+                              className="px-4 py-2 bg-[#5a6aff] text-white rounded-md text-sm hover:bg-[#4f5de0] transition-colors"
+                              data-testid={`timeline-save-edit-${post.id}`}
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={() => setEditingPost(null)}
+                              className={`px-4 py-2 border rounded-md text-sm transition-colors ${theme === 'dark' ? 'border-[#3d4270] text-gray-400 hover:text-white' : 'border-gray-300 text-gray-600 hover:text-black'}`}
+                              data-testid={`timeline-cancel-edit-${post.id}`}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          {/* Post Header - Title and Meta */}
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-1">
+                            <h3 className={`font-medium text-base break-words ${theme === 'dark' ? 'text-white' : 'text-black'}`}>
+                              {post.title}
+                              {post.edited === 1 && <span className={`text-xs ml-2 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>(edited)</span>}
+                            </h3>
+                          </div>
+                          
+                          {/* Post Meta - User, Date, Time */}
+                          <div className={`flex flex-wrap items-center gap-1 md:gap-2 mb-3 text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                            <span className={`font-medium ${theme === 'dark' ? 'text-[#6b7cff]' : 'text-blue-600'}`}>@{post.username}</span>
+                            <span className="hidden sm:inline">•</span>
+                            <span>{new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                            <span className="hidden sm:inline">•</span>
+                            <span>{new Date(post.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
+                          
+                          {/* Media Area */}
+                          {post.media && (
+                            <div className={`w-full rounded-lg mb-3 overflow-hidden border ${theme === 'dark' ? 'border-[#252850] bg-[#12152a]' : 'border-gray-200 bg-gray-50'}`}>
+                              {post.type === 'clip' ? (
+                                <div className="relative w-full bg-black h-64 md:h-96">
+                                  <video 
+                                    ref={setClipVideoRef(post.id)}
+                                    controls 
+                                    className="w-full h-full"
+                                    muted
+                                    playsInline
+                                    autoPlay
+                                    preload="metadata"
+                                    onCanPlay={() => handleVideoPlayable(post.id)}
+                                    onError={() => handleVideoPlayable(post.id)}
+                                  >
+                                    <source src={post.media} />
+                                  </video>
+                                  {videoLoadingMap[post.id] !== false && (
+                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/20">
+                                      <div className="w-12 h-12 border-4 border-gray-400 border-t-white rounded-full animate-spin"></div>
+                                    </div>
+                                  )}
                                 </div>
+                              ) : (
+                                <img src={post.media} alt={post.title} className="w-full object-cover" />
                               )}
                             </div>
-                          ) : (
-                            <img src={post.media} alt={post.title} className="w-full object-cover" />
-                          )
-                        ) : (
-                          <div className={`h-32 md:h-40 flex items-center justify-center text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
-                            Image
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Content */}
-                      {post.content && (
-                        <p className={`text-sm leading-relaxed mb-3 break-words ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{post.content}</p>
-                      )}
-
-                      {/* Tags */}
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {post.tags && post.tags.map((tag, idx) => (
-                          <span 
-                            key={idx} 
-                            className={`px-4 py-1 rounded-full text-xs transition-colors cursor-pointer ${theme === 'dark' ? 'text-gray-300 border border-[#3d4270] bg-[#1a1d3a] hover:border-[#5a6aff]' : 'text-gray-700 border border-gray-300 bg-gray-100 hover:border-gray-400'}`}
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-
-                      {/* Actions Row */}
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-1.5">
-                            {HILARITY_LEVELS.map((item, index) => {
-                              const isSelected = post.userHilarityLevel === item.level;
-                              return (
-                                <motion.button
-                                  key={item.level}
-                                  whileHover={{ scale: 1.22, y: -4 }}
-                                  whileTap={{ scale: 0.92 }}
-                                  animate={{ rotate: isSelected ? [0, -8, 8, 0] : 0 }}
-                                  transition={{ duration: 0.3, delay: index * 0.03 }}
-                                  className={`text-2xl md:text-3xl transition-all ${isSelected ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
-                                  style={{ filter: isSelected ? 'drop-shadow(0 3px 0 rgba(0,0,0,0.25)) drop-shadow(0 10px 14px rgba(0,0,0,0.25))' : 'drop-shadow(0 2px 0 rgba(0,0,0,0.2))' }}
-                                  onClick={() => handleVote(post.id, item.level)}
-                                  title={item.label}
-                                  data-testid={`hilarity-${post.id}-${item.level}`}
-                                >
-                                  <span aria-hidden="true">{item.emoji}</span>
-                                </motion.button>
-                              );
-                            })}
-                          </div>
-                          <span className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                            Hilarity {getHilarityScore(post)}/5 • {formatVotes(post.upvotes + post.downvotes)} votes
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <button className={`flex items-center gap-1.5 text-sm transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black'}`} data-testid={`share-${post.id}`}>
-                            <Share2 size={16} />
-                            Share
-                          </button>
-                          {canDeletePost(post) && (
-                            <button
-                              className={`flex items-center gap-1.5 text-sm transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-red-500' : 'text-gray-600 hover:text-red-600'}`}
-                              onClick={() => openDeleteModal(post.id)}
-                              data-testid={`timeline-delete-post-${post.id}`}
-                            >
-                              <Trash2 size={16} />
-                              Delete
-                            </button>
                           )}
-                        </div>
-                      </div>
+
+                          {/* Content */}
+                          {post.content && (
+                            <p className={`text-sm leading-relaxed mb-3 break-words ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{post.content}</p>
+                          )}
+
+                          {/* Tags */}
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            {post.tags && post.tags.map((tag, idx) => (
+                              <span 
+                                key={idx} 
+                                className={`px-4 py-1 rounded-full text-xs transition-colors cursor-pointer ${theme === 'dark' ? 'text-gray-300 border border-[#3d4270] bg-[#1a1d3a] hover:border-[#5a6aff]' : 'text-gray-700 border border-gray-300 bg-gray-100 hover:border-gray-400'}`}
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+
+                          {/* Actions Row */}
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-1.5">
+                                {HILARITY_LEVELS.map((item, index) => {
+                                  const isSelected = post.userHilarityLevel === item.level;
+                                  return (
+                                    <motion.button
+                                      key={item.level}
+                                      whileHover={{ scale: 1.22, y: -4 }}
+                                      whileTap={{ scale: 0.92 }}
+                                      animate={{ rotate: isSelected ? [0, -8, 8, 0] : 0 }}
+                                      transition={{ duration: 0.3, delay: index * 0.03 }}
+                                      className={`text-2xl md:text-3xl transition-all ${isSelected ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
+                                      style={{ filter: isSelected ? 'drop-shadow(0 3px 0 rgba(0,0,0,0.25)) drop-shadow(0 10px 14px rgba(0,0,0,0.25))' : 'drop-shadow(0 2px 0 rgba(0,0,0,0.2))' }}
+                                      onClick={() => handleVote(post.id, item.level)}
+                                      title={item.label}
+                                      data-testid={`hilarity-${post.id}-${item.level}`}
+                                    >
+                                      <span aria-hidden="true">{item.emoji}</span>
+                                    </motion.button>
+                                  );
+                                })}
+                              </div>
+                              <span className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                                Hilarity {getHilarityScore(post)}/5 • {formatVotes(post.upvotes + post.downvotes)} votes
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <button className={`flex items-center gap-1.5 text-sm transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black'}`} data-testid={`share-${post.id}`}>
+                                <Share2 size={16} />
+                                Share
+                              </button>
+                              {canDeletePost(post) && (
+                                <button
+                                  className={`flex items-center gap-1.5 text-sm transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-[#5a6aff]' : 'text-gray-600 hover:text-blue-600'}`}
+                                  onClick={() => handleEditPost(post)}
+                                  data-testid={`timeline-edit-post-${post.id}`}
+                                >
+                                  <Edit3 size={16} />
+                                  Edit
+                                </button>
+                              )}
+                              {canDeletePost(post) && (
+                                <button
+                                  className={`flex items-center gap-1.5 text-sm transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-red-500' : 'text-gray-600 hover:text-red-600'}`}
+                                  onClick={() => openDeleteModal(post.id)}
+                                  data-testid={`timeline-delete-post-${post.id}`}
+                                >
+                                  <Trash2 size={16} />
+                                  Delete
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   ))
                 )}
