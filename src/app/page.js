@@ -444,7 +444,7 @@ export default function Home() {
         <aside 
           className={`fixed top-[72px] left-0 bottom-0 w-64 px-5 py-5 overflow-y-auto transition-transform duration-300 z-30 border-r ${
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          } md:translate-x-0 md:relative md:top-0 ${theme === 'dark' ? 'bg-[#0d0f1e] border-[#1e2140]' : 'bg-white border-gray-200'}`}
+          } md:translate-x-0 ${theme === 'dark' ? 'bg-[#0d0f1e] border-[#1e2140]' : 'bg-white border-gray-200'}`}
           data-testid="sidebar"
         >
           <nav className="space-y-2">
@@ -492,7 +492,7 @@ export default function Home() {
         )}
 
         {/* Main Content - Scrollable */}
-        <main className={`flex-1 w-full md:ml-0 min-h-[calc(100vh-72px)] ${theme === 'dark' ? 'bg-[#0d0f1e]' : 'bg-white'}`} data-testid="main-content">
+        <main className={`flex-1 w-full md:ml-64 min-h-[calc(100vh-72px)] ${theme === 'dark' ? 'bg-[#0d0f1e]' : 'bg-white'}`} data-testid="main-content">
           {showProfile ? (
             /* Profile View */
             <div className={`pt-6 md:pt-8 px-4 md:px-8 pb-8 ${theme === 'dark' ? 'bg-[#0d0f1e]' : 'bg-white'}`} data-testid="profile-view">
@@ -650,7 +650,7 @@ export default function Home() {
           ) : !showAddPost ? (
             <>
               {/* Fixed Tabs Section */}
-              <div className={`sticky top-[72px] z-30 px-4 md:px-8 pt-6 md:pt-8 pb-4 transition-colors ${theme === 'dark' ? 'bg-[#0d0f1e]' : 'bg-white'}`} style={{borderBottom: `1px solid ${theme === 'dark' ? '#252850' : '#e5e7eb'}`}}>
+              <div className={`sticky top-[72px] z-30 px-4 md:px-8 pt-6 md:pt-8 pb-4 transition-colors ${theme === 'dark' ? 'bg-[#0d0f1e]' : 'bg-white'}`}>
                 {/* Tabs and Post Button */}
                 <div className="flex items-center justify-between gap-4 mb-2 w-full md:max-w-2xl md:mx-auto">
                   <div className="flex gap-4 md:gap-6">
