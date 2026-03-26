@@ -7,7 +7,6 @@ const INTERESTS = [
   'Programming',
   'Cyber Security',
   'AI/ Machine Learning',
-  'Programming',
   'Information Technology',
   'Robotics',
   'Computer Science',
@@ -22,7 +21,7 @@ const INTERESTS = [
 export default function Home() {
   const [activeTab, setActiveTab] = useState('jokes');
   const [posts, setPosts] = useState([]);
-  const [selectedInterest, setSelectedInterest] = useState('Cyber Security');
+  const [selectedInterest, setSelectedInterest] = useState('Programming');
   const [sortBy, setSortBy] = useState('trending');
   const [showAddPost, setShowAddPost] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -31,6 +30,7 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Profile state
   const [profilePosts, setProfilePosts] = useState([]);
@@ -354,29 +354,46 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#0d0f1e]" data-testid="main-container">
       {/* Header - Fixed */}
-      <header className="fixed top-0 left-0 right-0 z-40 px-6 py-3 border-b border-[#1e2140] bg-[#0d0f1e]" data-testid="header">
+      <header className="fixed top-0 left-0 right-0 z-40 px-4 md:px-6 py-3 border-b border-[#1e2140] bg-[#0d0f1e]" data-testid="header">
         <div className="flex items-center justify-between">
-          <div className="flex items-center" data-testid="logo">
+          <div className="flex items-center gap-4">
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="md:hidden text-gray-400 hover:text-white transition-colors"
+              data-testid="mobile-menu-btn"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
             <img 
               src="https://customer-assets.emergentagent.com/job_joke-vault-app/artifacts/6z202jm3_Component%207.png" 
               alt="CRACK-A-GAG - laugh and learn tech" 
-              className="h-16 object-contain"
+              className="h-12 md:h-16 object-contain"
             />
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             {user ? (
               <>
                 <button 
                   onClick={handleShowProfile}
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:text-white border border-[#3d4270] rounded-full hover:border-[#5a6aff] transition-all"
+                  className="hidden sm:flex items-center gap-2 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-300 hover:text-white border border-[#3d4270] rounded-full hover:border-[#5a6aff] transition-all"
                   data-testid="profile-btn"
                 >
                   <User size={16} />
-                  {user.username}
+                  <span className="hidden md:inline">{user.username}</span>
+                </button>
+                <button 
+                  onClick={handleShowProfile}
+                  className="sm:hidden p-2 text-gray-300 hover:text-white border border-[#3d4270] rounded-full hover:border-[#5a6aff] transition-all"
+                  data-testid="profile-mobile-btn"
+                >
+                  <User size={16} />
                 </button>
                 <button 
                   onClick={handleLogout}
-                  className="px-5 py-2 text-sm text-gray-300 hover:text-white border border-[#3d4270] rounded-full hover:border-[#5a6aff] transition-all"
+                  className="hidden sm:block px-3 md:px-5 py-2 text-xs md:text-sm text-gray-300 hover:text-white border border-[#3d4270] rounded-full hover:border-[#5a6aff] transition-all"
                   data-testid="logout-btn"
                 >
                   Logout
@@ -386,14 +403,14 @@ export default function Home() {
               <>
                 <button 
                   onClick={() => { setIsLogin(true); setShowAuth(true); }}
-                  className="px-5 py-2 text-sm text-gray-300 hover:text-white border border-[#3d4270] rounded-full hover:border-[#5a6aff] transition-all"
+                  className="hidden sm:block px-3 md:px-5 py-2 text-xs md:text-sm text-gray-300 hover:text-white border border-[#3d4270] rounded-full hover:border-[#5a6aff] transition-all"
                   data-testid="signin-btn"
                 >
                   Sign In
                 </button>
                 <button 
                   onClick={() => { setIsLogin(false); setShowAuth(true); }}
-                  className="px-5 py-2 text-sm text-white bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] rounded-full hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
+                  className="px-3 md:px-5 py-2 text-xs md:text-sm text-white bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] rounded-full hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
                   data-testid="signup-btn"
                 >
                   Sign Up
@@ -405,12 +422,17 @@ export default function Home() {
       </header>
 
       <div className="flex pt-[72px]">
-        {/* Sidebar - Fixed */}
-        <aside className="fixed top-[72px] left-0 bottom-0 w-64 px-5 py-5 overflow-y-auto bg-[#0d0f1e] border-r border-[#1e2140]" data-testid="sidebar">
+        {/* Sidebar - Fixed on Desktop, Toggle on Mobile */}
+        <aside 
+          className={`fixed top-[72px] left-0 bottom-0 w-64 px-5 py-5 overflow-y-auto bg-[#0d0f1e] border-r border-[#1e2140] transition-transform duration-300 z-30 ${
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } md:translate-x-0 md:relative md:top-0`}
+          data-testid="sidebar"
+        >
           <nav className="space-y-2">
             <div 
               className={`flex items-center gap-3 py-2 cursor-pointer transition-colors text-sm ${sortBy === 'trending' ? 'text-white' : 'text-gray-400 hover:text-white'}`}
-              onClick={() => { setSortBy('trending'); setSelectedInterest(null); }}
+              onClick={() => { setSortBy('trending'); setSelectedInterest(null); setSidebarOpen(false); }}
               data-testid="trending-nav"
             >
               <TrendingUp size={18} />
@@ -418,7 +440,7 @@ export default function Home() {
             </div>
             <div 
               className={`flex items-center gap-3 py-2 cursor-pointer transition-colors text-sm ${sortBy === 'top' ? 'text-white' : 'text-gray-400 hover:text-white'}`}
-              onClick={() => { setSortBy('top'); setSelectedInterest(null); }}
+              onClick={() => { setSortBy('top'); setSelectedInterest(null); setSidebarOpen(false); }}
               data-testid="top-ranked-nav"
             >
               <BarChart3 size={18} />
@@ -433,7 +455,7 @@ export default function Home() {
                 <div
                   key={idx}
                   className={`py-1.5 pl-2 cursor-pointer transition-colors text-sm ${selectedInterest === interest ? 'text-white' : 'text-gray-400 hover:text-white'}`}
-                  onClick={() => setSelectedInterest(selectedInterest === interest ? null : interest)}
+                  onClick={() => { setSelectedInterest(selectedInterest === interest ? null : interest); setSidebarOpen(false); }}
                   data-testid={`interest-${interest.toLowerCase().replace(/[^a-z]/g, '-')}`}
                 >
                   {interest}
@@ -443,12 +465,20 @@ export default function Home() {
           </div>
         </aside>
 
+        {/* Mobile Sidebar Overlay */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 z-20 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         {/* Main Content - Scrollable */}
-        <main className="flex-1 ml-64 min-h-[calc(100vh-72px)]" data-testid="main-content">
+        <main className="flex-1 w-full md:ml-0 min-h-[calc(100vh-72px)]" data-testid="main-content">
           {showProfile ? (
             /* Profile View */
-            <div className="pt-8 px-8" data-testid="profile-view">
-              <div className="flex items-center mb-8">
+            <div className="pt-6 md:pt-8 px-4 md:px-8 pb-8" data-testid="profile-view">
+              <div className="flex items-center mb-6 md:mb-8">
                 <button 
                   className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
                   onClick={() => setShowProfile(false)}
@@ -457,14 +487,14 @@ export default function Home() {
                   <ArrowLeft size={24} />
                   <span className="text-lg">Back</span>
                 </button>
-                <h2 className="text-2xl font-semibold text-white flex-1 text-center pr-20">My Profile</h2>
+                <h2 className="text-xl md:text-2xl font-semibold text-white flex-1 text-center pr-6 md:pr-20">My Profile</h2>
               </div>
 
               {/* Username Section */}
-              <div className="max-w-2xl mx-auto mb-8 p-6 bg-[#171932] rounded-lg border border-[#2d3154]">
+              <div className="w-full md:max-w-2xl md:mx-auto mb-8 p-4 md:p-6 bg-[#171932] rounded-lg border border-[#2d3154]">
                 <h3 className="text-lg font-medium text-white mb-4">Username</h3>
                 {editingUsername ? (
-                  <div className="flex gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <input
                       type="text"
                       className="flex-1 bg-[#0d0f1e] border border-[#3d4270] rounded-md px-4 py-2 text-white text-sm focus:outline-none focus:border-[#5a6aff]"
@@ -475,24 +505,24 @@ export default function Home() {
                     />
                     <button
                       onClick={handleUpdateUsername}
-                      className="px-4 py-2 bg-[#5a6aff] text-white rounded-md text-sm hover:bg-[#4f5de0] transition-colors"
+                      className="px-4 py-2 bg-[#5a6aff] text-white rounded-md text-sm hover:bg-[#4f5de0] transition-colors whitespace-nowrap"
                       data-testid="save-username-btn"
                     >
                       Save
                     </button>
                     <button
                       onClick={() => setEditingUsername(false)}
-                      className="px-4 py-2 border border-[#3d4270] text-gray-400 rounded-md text-sm hover:text-white transition-colors"
+                      className="px-4 py-2 border border-[#3d4270] text-gray-400 rounded-md text-sm hover:text-white transition-colors whitespace-nowrap"
                     >
                       Cancel
                     </button>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <span className="text-gray-300 text-lg">@{user?.username}</span>
                     <button
                       onClick={() => { setNewUsername(user?.username || ''); setEditingUsername(true); }}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-400 hover:text-white border border-[#3d4270] rounded-md hover:border-[#5a6aff] transition-all"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-400 hover:text-white border border-[#3d4270] rounded-md hover:border-[#5a6aff] transition-all whitespace-nowrap"
                       data-testid="edit-username-btn"
                     >
                       <Edit3 size={14} />
@@ -503,7 +533,7 @@ export default function Home() {
               </div>
 
               {/* User Posts */}
-              <div className="max-w-2xl mx-auto">
+              <div className="w-full md:max-w-2xl md:mx-auto">
                 <h3 className="text-lg font-medium text-white mb-4">My Posts ({profilePosts.length})</h3>
                 
                 {profilePosts.length === 0 ? (
@@ -539,7 +569,7 @@ export default function Home() {
                                 <option key={interest} value={interest}>{interest}</option>
                               ))}
                             </select>
-                            <div className="flex gap-2">
+                            <div className="flex flex-col sm:flex-row gap-2">
                               <button
                                 onClick={handleSaveEdit}
                                 className="px-4 py-2 bg-[#5a6aff] text-white rounded-md text-sm hover:bg-[#4f5de0] transition-colors"
@@ -557,17 +587,17 @@ export default function Home() {
                         ) : (
                           /* View Mode */
                           <>
-                            <div className="flex items-start justify-between mb-2">
-                              <div>
-                                <h4 className="text-white font-medium">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-start justify-between gap-3 mb-2">
+                              <div className="flex-1">
+                                <h4 className="text-white font-medium break-words">
                                   {post.title}
                                   {post.edited === 1 && <span className="text-gray-500 text-sm ml-2">(edited)</span>}
                                 </h4>
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-gray-500 mt-1">
                                   {post.type === 'joke' ? 'Joke' : 'Clip'} • {post.interest} • {new Date(post.created_at).toLocaleDateString()}
                                 </p>
                               </div>
-                              <div className="flex gap-2">
+                              <div className="flex gap-2 flex-shrink-0">
                                 <button
                                   onClick={() => handleEditPost(post)}
                                   className="p-2 text-gray-400 hover:text-[#5a6aff] transition-colors"
@@ -585,9 +615,9 @@ export default function Home() {
                               </div>
                             </div>
                             {post.content && (
-                              <p className="text-gray-400 text-sm">{post.content}</p>
+                              <p className="text-gray-400 text-sm break-words">{post.content}</p>
                             )}
-                            <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-2 text-xs text-gray-500">
                               <span>{post.upvotes} upvotes</span>
                               <span>{post.downvotes} downvotes</span>
                             </div>
@@ -602,19 +632,19 @@ export default function Home() {
           ) : !showAddPost ? (
             <>
               {/* Fixed Tabs Section */}
-              <div className="sticky top-[72px] z-30 bg-[#0d0f1e] px-8 pt-8 pb-4">
+              <div className="sticky top-[72px] z-30 bg-[#0d0f1e] px-4 md:px-8 pt-6 md:pt-8 pb-4">
                 {/* Tabs and Post Button */}
-                <div className="flex items-start justify-between mb-2 max-w-2xl mx-auto">
-                  <div className="flex gap-6">
+                <div className="flex items-center justify-between gap-4 mb-2 w-full md:max-w-2xl md:mx-auto">
+                  <div className="flex gap-4 md:gap-6">
                     <span
-                      className={`text-xl font-medium cursor-pointer pb-1 border-b-2 transition-all ${activeTab === 'jokes' ? 'text-white border-white' : 'text-gray-400 border-transparent hover:text-white'}`}
+                      className={`text-lg md:text-xl font-medium cursor-pointer pb-1 border-b-2 transition-all ${activeTab === 'jokes' ? 'text-white border-white' : 'text-gray-400 border-transparent hover:text-white'}`}
                       onClick={() => setActiveTab('jokes')}
                       data-testid="jokes-tab"
                     >
                       Jokes
                     </span>
                     <span
-                      className={`text-xl font-medium cursor-pointer pb-1 border-b-2 transition-all ${activeTab === 'clips' ? 'text-white border-white' : 'text-gray-400 border-transparent hover:text-white'}`}
+                      className={`text-lg md:text-xl font-medium cursor-pointer pb-1 border-b-2 transition-all ${activeTab === 'clips' ? 'text-white border-white' : 'text-gray-400 border-transparent hover:text-white'}`}
                       onClick={() => setActiveTab('clips')}
                       data-testid="clips-tab"
                     >
@@ -622,7 +652,7 @@ export default function Home() {
                     </span>
                   </div>
                   <button 
-                    className="bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] px-5 py-2 rounded-full text-white font-medium text-sm flex items-center gap-2 hover:shadow-lg hover:shadow-indigo-500/30 transition-all hover:-translate-y-0.5"
+                    className="bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] px-5 py-2 rounded-full text-white font-medium text-sm flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-indigo-500/30 transition-all hover:-translate-y-0.5"
                     onClick={handlePostClick}
                     data-testid="post-btn"
                   >
@@ -633,13 +663,13 @@ export default function Home() {
 
                 {/* Current Interest Tag */}
                 {selectedInterest && (
-                  <p className="text-[#6b7cff] text-sm max-w-2xl mx-auto" data-testid="current-interest">#{selectedInterest}</p>
+                  <p className="text-[#6b7cff] text-sm w-full md:max-w-2xl md:mx-auto" data-testid="current-interest">#{selectedInterest}</p>
                 )}
               </div>
 
               {/* Posts - Scrollable */}
-              <div className="px-8 py-5">
-                <div className="space-y-6 max-w-2xl mx-auto" data-testid="posts-container">
+              <div className="px-4 md:px-8 py-5 pb-8">
+                <div className="space-y-6 w-full md:max-w-2xl md:mx-auto" data-testid="posts-container">
                 {posts.length === 0 ? (
                   <div className="text-center text-gray-500 py-12 text-sm" data-testid="no-posts">
                     No {activeTab} found. Be the first to post!
@@ -648,19 +678,19 @@ export default function Home() {
                   posts.map((post) => (
                     <div key={post.id} className="pb-5 border-b border-[#252850]" data-testid={`post-${post.id}`}>
                       {/* Post Header - Title and Meta */}
-                      <div className="flex items-center justify-between mb-1">
-                        <h3 className="text-white font-medium text-base">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-1">
+                        <h3 className="text-white font-medium text-base break-words">
                           {post.title}
                           {post.edited === 1 && <span className="text-gray-500 text-xs ml-2">(edited)</span>}
                         </h3>
                       </div>
                       
                       {/* Post Meta - User, Date, Time */}
-                      <div className="flex items-center gap-2 mb-3 text-gray-400 text-xs">
+                      <div className="flex flex-wrap items-center gap-1 md:gap-2 mb-3 text-gray-400 text-xs">
                         <span className="text-[#6b7cff] font-medium">@{post.username}</span>
-                        <span>•</span>
+                        <span className="hidden sm:inline">•</span>
                         <span>{new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                        <span>•</span>
+                        <span className="hidden sm:inline">•</span>
                         <span>{new Date(post.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
                       
@@ -675,7 +705,7 @@ export default function Home() {
                             <img src={post.media} alt={post.title} className="w-full object-cover" />
                           )
                         ) : (
-                          <div className="h-40 flex items-center justify-center text-gray-500 text-sm">
+                          <div className="h-32 md:h-40 flex items-center justify-center text-gray-500 text-sm">
                             Image
                           </div>
                         )}
@@ -683,11 +713,11 @@ export default function Home() {
 
                       {/* Content */}
                       {post.content && (
-                        <p className="text-gray-300 text-sm leading-relaxed mb-3">{post.content}</p>
+                        <p className="text-gray-300 text-sm leading-relaxed mb-3 break-words">{post.content}</p>
                       )}
 
                       {/* Tags */}
-                      <div className="flex gap-2 mb-3">
+                      <div className="flex flex-wrap gap-2 mb-3">
                         {post.tags && post.tags.map((tag, idx) => (
                           <span 
                             key={idx} 
@@ -699,7 +729,7 @@ export default function Home() {
                       </div>
 
                       {/* Actions Row */}
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <div className="flex items-center gap-2">
                           <button
                             className={`p-1 transition-colors ${post.userVote === 'up' ? 'text-green-500' : 'text-gray-400 hover:text-white'}`}
@@ -725,13 +755,13 @@ export default function Home() {
                     </div>
                   ))
                 )}
+                </div>
               </div>
-            </div>
             </>
           ) : (
             /* Add Post Form */
-            <div className="pt-8" data-testid="add-post-form">
-              <div className="flex items-center mb-8">
+            <div className="pt-6 md:pt-8 px-4 md:px-8 pb-8" data-testid="add-post-form">
+              <div className="flex items-center mb-6 md:mb-8">
                 <button 
                   className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
                   onClick={() => setShowAddPost(false)}
@@ -740,10 +770,10 @@ export default function Home() {
                   <ArrowLeft size={24} />
                   <span className="text-lg">Back</span>
                 </button>
-                <h2 className="text-2xl font-semibold text-white flex-1 text-center pr-20">Add a post</h2>
+                <h2 className="text-xl md:text-2xl font-semibold text-white flex-1 text-center pr-6 md:pr-20">Add a post</h2>
               </div>
 
-              <form onSubmit={handleCreatePost} className="max-w-md mx-auto space-y-4">
+              <form onSubmit={handleCreatePost} className="w-full max-w-xs md:max-w-md mx-auto space-y-4">
                 {/* Interest Dropdown */}
                 <div className="relative">
                   <select
@@ -809,7 +839,7 @@ export default function Home() {
                 <div className="flex justify-center pt-2">
                   <button
                     type="submit"
-                    className="bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] px-6 py-2.5 rounded-full text-white font-medium text-sm flex items-center gap-2 hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
+                    className="w-full md:w-auto bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] px-6 py-2.5 rounded-full text-white font-medium text-sm flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
                     disabled={loading}
                     data-testid="submit-post-btn"
                   >
@@ -825,9 +855,9 @@ export default function Home() {
 
       {/* Auth Modal */}
       {showAuth && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" onClick={() => setShowAuth(false)} data-testid="auth-modal">
-          <div className="bg-[#171932] border border-[#2d3154] rounded-xl p-8 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-xl font-semibold text-white text-center mb-6">{isLogin ? 'Sign In' : 'Sign Up'}</h2>
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={() => setShowAuth(false)} data-testid="auth-modal">
+          <div className="bg-[#171932] border border-[#2d3154] rounded-xl p-6 md:p-8 w-full max-w-xs md:max-w-sm" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg md:text-xl font-semibold text-white text-center mb-6">{isLogin ? 'Sign In' : 'Sign Up'}</h2>
             
             {authError && (
               <p className="text-red-500 text-sm text-center mb-4" data-testid="auth-error">{authError}</p>
