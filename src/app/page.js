@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, BarChart3, Pencil, Share2, ArrowLeft, ChevronDown, User, Trash2, Edit3, Sun, Moon } from 'lucide-react';
+import { TrendingUp, BarChart3, Pencil, Share2, ArrowLeft, ChevronDown, User, Trash2, Edit3, Sun, Moon, Shield } from 'lucide-react';
 
 const INTERESTS = [
   'Programming',
@@ -27,6 +27,14 @@ const HILARITY_LEVELS = [
   { level: 5, emoji: '🤣', label: 'Legendary' }
 ];
 
+const normalizeUser = (rawUser) => {
+  if (!rawUser) return null;
+  return {
+    ...rawUser,
+    is_admin: Number(rawUser.is_admin ?? (rawUser.isAdmin ? 1 : 0))
+  };
+};
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState('jokes');
   const [posts, setPosts] = useState([]);
@@ -34,6 +42,7 @@ export default function Home() {
   const [sortBy, setSortBy] = useState('trending');
   const [showAddPost, setShowAddPost] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showAdminDashboard, setShowAdminDashboard] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const [user, setUser] = useState(null);
@@ -80,6 +89,17 @@ export default function Home() {
     tags: ''
   });
   const [videoLoadingMap, setVideoLoadingMap] = useState({});
+  const [adminUsers, setAdminUsers] = useState([]);
+  const [adminLoading, setAdminLoading] = useState(false);
+  const [adminError, setAdminError] = useState('');
+  const [adminDeleteModal, setAdminDeleteModal] = useState({
+    isOpen: false,
+    userId: null,
+    username: '',
+    status: 'confirm',
+    message: '',
+    processing: false
+  });
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
@@ -87,7 +107,7 @@ export default function Home() {
     const storedTheme = localStorage.getItem('theme') || 'dark';
     if (storedToken && storedUser) {
       setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+      setUser(normalizeUser(JSON.parse(storedUser)));
     }
     setTheme(storedTheme);
   }, []);
@@ -150,10 +170,11 @@ export default function Home() {
         return;
       }
 
+      const normalizedUser = normalizeUser(data.user);
       setToken(data.token);
-      setUser(data.user);
+      setUser(normalizedUser);
       localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('user', JSON.stringify(normalizedUser));
       setShowAuth(false);
       setAuthForm({ username: '', email: '', password: '' });
     } catch (error) {
@@ -166,8 +187,17 @@ export default function Home() {
   const handleLogout = () => {
     setToken(null);
     setUser(null);
+    setShowProfile(false);
+    setShowAdminDashboard(false);
+    setShowAddPost(false);
+    setSidebarOpen(false);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+  };
+
+  const isAdminUser = () => {
+    if (!user) return false;
+    return Number(user.is_admin) === 1 || user.username === 'techguy';
   };
 
   const handleVote = async (postId, hilarityLevel) => {
@@ -332,8 +362,120 @@ export default function Home() {
 
   const handleShowProfile = () => {
     setShowProfile(true);
+    setShowAdminDashboard(false);
     setShowAddPost(false);
     fetchProfile();
+  };
+
+  const fetchAdminUsers = async () => {
+    const currentToken = getAuthToken();
+    if (!currentToken) {
+      setShowAuth(true);
+      return;
+    }
+
+    setAdminLoading(true);
+    setAdminError('');
+    try {
+      const res = await fetch('/api/admin/users', {
+        headers: { Authorization: `Bearer ${currentToken}` }
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setAdminError(data.error || 'Failed to load admin dashboard data.');
+        if (res.status === 401) {
+          setShowAuth(true);
+        }
+        return;
+      }
+
+      setAdminUsers(Array.isArray(data.users) ? data.users : []);
+    } catch (error) {
+      console.error('Admin dashboard fetch failed:', error);
+      setAdminError('Failed to load admin dashboard data.');
+    } finally {
+      setAdminLoading(false);
+    }
+  };
+
+  const handleShowAdminDashboard = () => {
+    setShowAdminDashboard(true);
+    setShowProfile(false);
+    setShowAddPost(false);
+    fetchAdminUsers();
+  };
+
+  const openAdminDeleteModal = (targetUser) => {
+    setAdminDeleteModal({
+      isOpen: true,
+      userId: targetUser.id,
+      username: targetUser.username,
+      status: 'confirm',
+      message: `Delete @${targetUser.username} and all their posts?`,
+      processing: false
+    });
+  };
+
+  const closeAdminDeleteModal = () => {
+    setAdminDeleteModal({
+      isOpen: false,
+      userId: null,
+      username: '',
+      status: 'confirm',
+      message: '',
+      processing: false
+    });
+  };
+
+  const handleAdminDeleteUser = async () => {
+    if (!adminDeleteModal.userId) return;
+
+    const currentToken = getAuthToken();
+    if (!currentToken) {
+      closeAdminDeleteModal();
+      setShowAuth(true);
+      return;
+    }
+
+    setAdminDeleteModal((prev) => ({ ...prev, processing: true }));
+
+    try {
+      const res = await fetch(`/api/admin/users/${adminDeleteModal.userId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${currentToken}` }
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setAdminDeleteModal((prev) => ({
+          ...prev,
+          status: 'error',
+          message: data.error || 'Failed to delete user.',
+          processing: false
+        }));
+        if (res.status === 401) {
+          setShowAuth(true);
+        }
+        return;
+      }
+
+      setAdminUsers((prev) => prev.filter((u) => u.id !== adminDeleteModal.userId));
+      setAdminDeleteModal((prev) => ({
+        ...prev,
+        status: 'success',
+        message: `@${prev.username} was deleted successfully.`,
+        processing: false
+      }));
+    } catch (error) {
+      console.error('Admin delete user failed:', error);
+      setAdminDeleteModal((prev) => ({
+        ...prev,
+        status: 'error',
+        message: 'Delete request failed. Please try again.',
+        processing: false
+      }));
+    }
   };
 
   const openProfileModal = (status, message) => {
@@ -373,8 +515,9 @@ export default function Home() {
       });
       if (res.ok) {
         const data = await res.json();
-        setUser(data.user);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        const normalizedUser = normalizeUser({ ...data.user, is_admin: user?.is_admin || 0 });
+        setUser(normalizedUser);
+        localStorage.setItem('user', JSON.stringify(normalizedUser));
         setEditingUsername(false);
         openProfileModal('success', 'Username updated successfully.');
       } else {
@@ -547,6 +690,16 @@ export default function Home() {
             </button>
             {user ? (
               <>
+                {isAdminUser() && (
+                  <button
+                    onClick={handleShowAdminDashboard}
+                    className={`hidden sm:flex items-center gap-2 px-3 md:px-4 py-2 text-xs md:text-sm rounded-full transition-all ${theme === 'dark' ? 'text-gray-300 hover:text-white border border-[#3d4270] hover:border-[#5a6aff]' : 'text-gray-700 hover:text-black border border-gray-300 hover:border-gray-400'}`}
+                    data-testid="admin-dashboard-btn"
+                  >
+                    <Shield size={16} />
+                    <span className="hidden md:inline">Admin</span>
+                  </button>
+                )}
                 <button 
                   onClick={handleShowProfile}
                   className={`hidden sm:flex items-center gap-2 px-3 md:px-4 py-2 text-xs md:text-sm rounded-full transition-all ${theme === 'dark' ? 'text-gray-300 hover:text-white border border-[#3d4270] hover:border-[#5a6aff]' : 'text-gray-700 hover:text-black border border-gray-300 hover:border-gray-400'}`}
@@ -562,12 +715,32 @@ export default function Home() {
                 >
                   <User size={16} />
                 </button>
+                {isAdminUser() && (
+                  <button
+                    onClick={handleShowAdminDashboard}
+                    className={`sm:hidden p-2 rounded-full transition-all ${theme === 'dark' ? 'text-gray-300 hover:text-white border border-[#3d4270] hover:border-[#5a6aff]' : 'text-gray-700 hover:text-black border border-gray-300 hover:border-gray-400'}`}
+                    data-testid="admin-dashboard-mobile-btn"
+                    title="Admin Dashboard"
+                  >
+                    <Shield size={16} />
+                  </button>
+                )}
                 <button 
                   onClick={handleLogout}
                   className={`hidden sm:block px-3 md:px-5 py-2 text-xs md:text-sm rounded-full transition-all ${theme === 'dark' ? 'text-gray-300 hover:text-white border border-[#3d4270] hover:border-[#5a6aff]' : 'text-gray-700 hover:text-black border border-gray-300 hover:border-gray-400'}`}
                   data-testid="logout-btn"
                 >
                   Logout
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className={`sm:hidden p-2 rounded-full transition-all ${theme === 'dark' ? 'text-gray-300 hover:text-white border border-[#3d4270] hover:border-[#5a6aff]' : 'text-gray-700 hover:text-black border border-gray-300 hover:border-gray-400'}`}
+                  data-testid="logout-mobile-btn"
+                  title="Logout"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
                 </button>
               </>
             ) : (
@@ -646,7 +819,101 @@ export default function Home() {
 
         {/* Main Content - Scrollable */}
         <main className={`flex-1 w-full md:ml-64 min-h-[calc(100vh-72px)] ${theme === 'dark' ? 'bg-[#0d0f1e]' : 'bg-white'}`} data-testid="main-content">
-          {showProfile ? (
+          {showAdminDashboard ? (
+            <div className={`pt-6 md:pt-8 px-4 md:px-8 pb-8 ${theme === 'dark' ? 'bg-[#0d0f1e]' : 'bg-white'}`} data-testid="admin-dashboard-view">
+              <div className="flex items-center mb-6 md:mb-8">
+                <button
+                  className={`flex items-center gap-2 transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black'}`}
+                  onClick={() => setShowAdminDashboard(false)}
+                  data-testid="admin-dashboard-back-btn"
+                >
+                  <ArrowLeft size={24} />
+                  <span className="text-lg">Back</span>
+                </button>
+                <h2 className={`text-xl md:text-2xl font-semibold flex-1 text-center pr-6 md:pr-20 ${theme === 'dark' ? 'text-white' : 'text-black'}`}>
+                  Admin Dashboard
+                </h2>
+              </div>
+
+              <div className="w-full md:max-w-4xl md:mx-auto space-y-6">
+                <div className={`p-4 md:p-6 rounded-lg border ${theme === 'dark' ? 'bg-[#171932] border-[#2d3154]' : 'bg-gray-50 border-gray-200'}`}>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                    <h3 className={`text-lg font-medium ${theme === 'dark' ? 'text-white' : 'text-black'}`}>All Users</h3>
+                    <button
+                      onClick={fetchAdminUsers}
+                      className="px-4 py-2 bg-[#5a6aff] text-white rounded-md text-sm hover:bg-[#4f5de0] transition-colors"
+                      data-testid="admin-refresh-btn"
+                    >
+                      Refresh
+                    </button>
+                  </div>
+
+                  {adminLoading ? (
+                    <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Loading dashboard...</p>
+                  ) : adminError ? (
+                    <p className="text-red-500 text-sm" data-testid="admin-error">{adminError}</p>
+                  ) : (
+                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`} data-testid="admin-user-count">
+                      {adminUsers.length} users found
+                    </p>
+                  )}
+                </div>
+
+                {!adminLoading && !adminError && adminUsers.map((dashboardUser) => (
+                  <div
+                    key={dashboardUser.id}
+                    className={`p-4 md:p-6 rounded-lg border ${theme === 'dark' ? 'bg-[#171932] border-[#2d3154]' : 'bg-gray-50 border-gray-200'}`}
+                    data-testid={`admin-user-${dashboardUser.id}`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+                      <div>
+                        <h4 className={`text-base md:text-lg font-medium ${theme === 'dark' ? 'text-white' : 'text-black'}`}>
+                          @{dashboardUser.username}
+                          {Number(dashboardUser.is_admin) === 1 && (
+                            <span className="ml-2 text-xs text-[#5a6aff]">ADMIN</span>
+                          )}
+                        </h4>
+                        <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{dashboardUser.email}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                          {dashboardUser.posts.length} posts
+                        </span>
+                        {Number(dashboardUser.is_admin) !== 1 && Number(dashboardUser.id) !== Number(user?.id) && (
+                          <button
+                            onClick={() => openAdminDeleteModal(dashboardUser)}
+                            className={`px-3 py-1.5 rounded-md text-xs transition-colors ${theme === 'dark' ? 'text-red-400 border border-red-900/40 hover:border-red-500 hover:text-red-300' : 'text-red-600 border border-red-200 hover:border-red-400 hover:text-red-700'}`}
+                            data-testid={`admin-delete-user-${dashboardUser.id}`}
+                          >
+                            Delete User
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {dashboardUser.posts.length === 0 ? (
+                      <p className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>No posts yet.</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {dashboardUser.posts.map((post) => (
+                          <div
+                            key={post.id}
+                            className={`p-3 rounded-md border ${theme === 'dark' ? 'bg-[#0d0f1e] border-[#252850]' : 'bg-white border-gray-200'}`}
+                            data-testid={`admin-user-post-${post.id}`}
+                          >
+                            <p className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-black'}`}>{post.title}</p>
+                            <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                              {post.type} • {post.interest} • {new Date(post.created_at).toLocaleDateString()} • {post.upvotes} up / {post.downvotes} down
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : showProfile ? (
             /* Profile View */
             <div className={`pt-6 md:pt-8 px-4 md:px-8 pb-8 ${theme === 'dark' ? 'bg-[#0d0f1e]' : 'bg-white'}`} data-testid="profile-view">
               <div className="flex items-center mb-6 md:mb-8">
@@ -1161,6 +1428,51 @@ export default function Home() {
                   onClick={closeDeleteModal}
                   className="px-6 py-2 rounded-full text-sm font-medium text-white bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
                   data-testid="delete-modal-ok-btn"
+                >
+                  Ok
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Admin Delete User Modal */}
+      {adminDeleteModal.isOpen && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" data-testid="admin-delete-user-modal">
+          <div className={`rounded-xl p-6 md:p-8 w-full max-w-xs md:max-w-sm border ${theme === 'dark' ? 'bg-[#171932] border-[#2d3154]' : 'bg-white border-gray-200'}`}>
+            <h2 className={`text-lg md:text-xl font-semibold text-center mb-3 ${theme === 'dark' ? 'text-white' : 'text-black'}`}>
+              {adminDeleteModal.status === 'confirm' ? 'Delete User' : adminDeleteModal.status === 'success' ? 'Success' : 'Delete Failed'}
+            </h2>
+            <p className={`text-sm text-center mb-6 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+              {adminDeleteModal.message}
+            </p>
+
+            {adminDeleteModal.status === 'confirm' ? (
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  onClick={closeAdminDeleteModal}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${theme === 'dark' ? 'border border-[#3d4270] text-gray-300 hover:text-white hover:border-[#5a6aff]' : 'border border-gray-300 text-gray-700 hover:text-black hover:border-gray-400'}`}
+                  disabled={adminDeleteModal.processing}
+                  data-testid="admin-delete-user-cancel-btn"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAdminDeleteUser}
+                  className="px-5 py-2 rounded-full text-sm font-medium text-white bg-gradient-to-r from-red-500 to-rose-600 hover:shadow-lg hover:shadow-red-500/30 transition-all"
+                  disabled={adminDeleteModal.processing}
+                  data-testid="admin-delete-user-confirm-btn"
+                >
+                  {adminDeleteModal.processing ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center">
+                <button
+                  onClick={closeAdminDeleteModal}
+                  className="px-6 py-2 rounded-full text-sm font-medium text-white bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
+                  data-testid="admin-delete-user-ok-btn"
                 >
                   Ok
                 </button>

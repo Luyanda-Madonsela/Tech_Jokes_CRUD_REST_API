@@ -4,7 +4,12 @@ const JWT_SECRET = process.env.JWT_SECRET || 'crackagag-secret-key-2024';
 
 export function generateToken(user) {
   return jwt.sign(
-    { userId: user.id, username: user.username, email: user.email },
+    {
+      userId: user.id,
+      username: user.username,
+      email: user.email,
+      isAdmin: user.is_admin === 1 || user.isAdmin === true
+    },
     JWT_SECRET,
     { expiresIn: '7d' }
   );

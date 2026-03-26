@@ -32,7 +32,7 @@ export async function POST(request) {
       'INSERT INTO users (username, email, password) VALUES (?, ?, ?)'
     ).run(username, email, hashedPassword);
 
-    const user = { id: result.lastInsertRowid, username, email };
+    const user = { id: result.lastInsertRowid, username, email, is_admin: 0 };
     const token = generateToken(user);
 
     return NextResponse.json({ user, token }, { status: 201 });

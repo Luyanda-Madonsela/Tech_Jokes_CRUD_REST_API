@@ -68,6 +68,12 @@ try {
 try {
   db.exec('ALTER TABLE votes ADD COLUMN hilarity_level INTEGER DEFAULT 5');
 } catch (e) { /* column already exists */ }
+try {
+  db.exec('ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0');
+} catch (e) { /* column already exists */ }
+
+// Ensure techguy always has admin rights
+db.prepare('UPDATE users SET is_admin = 1 WHERE username = ?').run('techguy');
 
 // Seed sample data if empty
 const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();
@@ -75,8 +81,8 @@ if (userCount.count === 0) {
   const hashedPassword = bcrypt.hashSync('password123', 10);
   
   db.prepare(`
-    INSERT INTO users (username, email, password) VALUES (?, ?, ?)
-  `).run('techguy', 'techguy@example.com', hashedPassword);
+    INSERT INTO users (username, email, password, is_admin) VALUES (?, ?, ?, ?)
+  `).run('techguy', 'techguy@example.com', hashedPassword, 1);
   
   db.prepare(`
     INSERT INTO users (username, email, password) VALUES (?, ?, ?)
