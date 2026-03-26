@@ -100,6 +100,14 @@ export default function Home() {
     message: '',
     processing: false
   });
+  const [adminPostDeleteModal, setAdminPostDeleteModal] = useState({
+    isOpen: false,
+    postId: null,
+    postTitle: '',
+    status: 'confirm',
+    message: '',
+    processing: false
+  });
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
@@ -478,6 +486,83 @@ export default function Home() {
     }
   };
 
+  const openAdminPostDeleteModal = (post) => {
+    setAdminPostDeleteModal({
+      isOpen: true,
+      postId: post.id,
+      postTitle: post.title,
+      status: 'confirm',
+      message: `Delete post "${post.title}"?`,
+      processing: false
+    });
+  };
+
+  const closeAdminPostDeleteModal = () => {
+    setAdminPostDeleteModal({
+      isOpen: false,
+      postId: null,
+      postTitle: '',
+      status: 'confirm',
+      message: '',
+      processing: false
+    });
+  };
+
+  const handleAdminDeletePost = async () => {
+    if (!adminPostDeleteModal.postId) return;
+
+    const currentToken = getAuthToken();
+    if (!currentToken) {
+      closeAdminPostDeleteModal();
+      setShowAuth(true);
+      return;
+    }
+
+    setAdminPostDeleteModal((prev) => ({ ...prev, processing: true }));
+
+    try {
+      const res = await fetch(`/api/admin/posts/${adminPostDeleteModal.postId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${currentToken}` }
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setAdminPostDeleteModal((prev) => ({
+          ...prev,
+          status: 'error',
+          message: data.error || 'Failed to delete post.',
+          processing: false
+        }));
+        if (res.status === 401) {
+          setShowAuth(true);
+        }
+        return;
+      }
+
+      setAdminUsers((prev) => prev.map((u) => ({
+        ...u,
+        posts: u.posts.filter((p) => Number(p.id) !== Number(adminPostDeleteModal.postId))
+      })));
+      setPosts((prev) => prev.filter((p) => Number(p.id) !== Number(adminPostDeleteModal.postId)));
+
+      setAdminPostDeleteModal((prev) => ({
+        ...prev,
+        status: 'success',
+        message: 'Post deleted successfully.',
+        processing: false
+      }));
+    } catch (error) {
+      console.error('Admin delete post failed:', error);
+      setAdminPostDeleteModal((prev) => ({
+        ...prev,
+        status: 'error',
+        message: 'Delete request failed. Please try again.',
+        processing: false
+      }));
+    }
+  };
+
   const openProfileModal = (status, message) => {
     setProfileModal({
       isOpen: true,
@@ -673,7 +758,7 @@ export default function Home() {
               </svg>
             </button>
             <img 
-              src="https://customer-assets.emergentagent.com/job_joke-vault-app/artifacts/6z202jm3_Component%207.png" 
+              src="/logo.png" 
               alt="CRACK-A-GAG - laugh and learn tech" 
               className="h-12 md:h-16 object-contain"
             />
@@ -901,10 +986,21 @@ export default function Home() {
                             className={`p-3 rounded-md border ${theme === 'dark' ? 'bg-[#0d0f1e] border-[#252850]' : 'bg-white border-gray-200'}`}
                             data-testid={`admin-user-post-${post.id}`}
                           >
-                            <p className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-black'}`}>{post.title}</p>
-                            <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                              {post.type} • {post.interest} • {new Date(post.created_at).toLocaleDateString()} • {post.upvotes} up / {post.downvotes} down
-                            </p>
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1 min-w-0">
+                                <p className={`text-sm font-medium break-words ${theme === 'dark' ? 'text-white' : 'text-black'}`}>{post.title}</p>
+                                <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                                  {post.type} • {post.interest} • {new Date(post.created_at).toLocaleDateString()} • {post.upvotes} up / {post.downvotes} down
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => openAdminPostDeleteModal(post)}
+                                className={`px-3 py-1.5 rounded-md text-xs whitespace-nowrap transition-colors ${theme === 'dark' ? 'text-red-400 border border-red-900/40 hover:border-red-500 hover:text-red-300' : 'text-red-600 border border-red-200 hover:border-red-400 hover:text-red-700'}`}
+                                data-testid={`admin-delete-post-${post.id}`}
+                              >
+                                Delete Post
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -1473,6 +1569,51 @@ export default function Home() {
                   onClick={closeAdminDeleteModal}
                   className="px-6 py-2 rounded-full text-sm font-medium text-white bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
                   data-testid="admin-delete-user-ok-btn"
+                >
+                  Ok
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Admin Delete Post Modal */}
+      {adminPostDeleteModal.isOpen && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" data-testid="admin-delete-post-modal">
+          <div className={`rounded-xl p-6 md:p-8 w-full max-w-xs md:max-w-sm border ${theme === 'dark' ? 'bg-[#171932] border-[#2d3154]' : 'bg-white border-gray-200'}`}>
+            <h2 className={`text-lg md:text-xl font-semibold text-center mb-3 ${theme === 'dark' ? 'text-white' : 'text-black'}`}>
+              {adminPostDeleteModal.status === 'confirm' ? 'Delete Post' : adminPostDeleteModal.status === 'success' ? 'Success' : 'Delete Failed'}
+            </h2>
+            <p className={`text-sm text-center mb-6 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+              {adminPostDeleteModal.message}
+            </p>
+
+            {adminPostDeleteModal.status === 'confirm' ? (
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  onClick={closeAdminPostDeleteModal}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${theme === 'dark' ? 'border border-[#3d4270] text-gray-300 hover:text-white hover:border-[#5a6aff]' : 'border border-gray-300 text-gray-700 hover:text-black hover:border-gray-400'}`}
+                  disabled={adminPostDeleteModal.processing}
+                  data-testid="admin-delete-post-cancel-btn"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAdminDeletePost}
+                  className="px-5 py-2 rounded-full text-sm font-medium text-white bg-gradient-to-r from-red-500 to-rose-600 hover:shadow-lg hover:shadow-red-500/30 transition-all"
+                  disabled={adminPostDeleteModal.processing}
+                  data-testid="admin-delete-post-confirm-btn"
+                >
+                  {adminPostDeleteModal.processing ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center">
+                <button
+                  onClick={closeAdminPostDeleteModal}
+                  className="px-6 py-2 rounded-full text-sm font-medium text-white bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
+                  data-testid="admin-delete-post-ok-btn"
                 >
                   Ok
                 </button>
