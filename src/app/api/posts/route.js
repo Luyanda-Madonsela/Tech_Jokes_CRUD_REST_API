@@ -32,16 +32,20 @@ export async function GET(request) {
     let userVotes = {};
     
     if (user) {
-      const votes = db.prepare('SELECT post_id, vote_type FROM votes WHERE user_id = ?').all(user.userId);
+      const votes = db.prepare('SELECT post_id, vote_type, hilarity_level FROM votes WHERE user_id = ?').all(user.userId);
       votes.forEach(v => {
-        userVotes[v.post_id] = v.vote_type;
+        userVotes[v.post_id] = {
+          userVote: v.vote_type,
+          userHilarityLevel: v.hilarity_level || (v.vote_type === 'up' ? 5 : 1)
+        };
       });
     }
     
     const postsWithVotes = posts.map(post => ({
       ...post,
       tags: post.tags ? post.tags.split(',') : [],
-      userVote: userVotes[post.id] || null
+      userVote: userVotes[post.id]?.userVote || null,
+      userHilarityLevel: userVotes[post.id]?.userHilarityLevel || null
     }));
     
     return NextResponse.json(postsWithVotes);

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { TrendingUp, BarChart3, Pencil, ArrowUp, ArrowDown, Share2, ArrowLeft, ChevronDown, User, Trash2, Edit3, Sun, Moon } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { TrendingUp, BarChart3, Pencil, Share2, ArrowLeft, ChevronDown, User, Trash2, Edit3, Sun, Moon } from 'lucide-react';
 
 const INTERESTS = [
   'Programming',
@@ -16,6 +17,14 @@ const INTERESTS = [
   'Human Computer Interaction',
   'Frontend Development',
   'Backend Development'
+];
+
+const HILARITY_LEVELS = [
+  { level: 1, emoji: '😅', label: 'Mild' },
+  { level: 2, emoji: '😄', label: 'Funny' },
+  { level: 3, emoji: '😆', label: 'Very Funny' },
+  { level: 4, emoji: '😂', label: 'Hilarious' },
+  { level: 5, emoji: '🤣', label: 'Legendary' }
 ];
 
 export default function Home() {
@@ -47,6 +56,11 @@ export default function Home() {
     processing: false
   });
   const [profileModal, setProfileModal] = useState({
+    isOpen: false,
+    status: 'success',
+    message: ''
+  });
+  const [postModal, setPostModal] = useState({
     isOpen: false,
     status: 'success',
     message: ''
@@ -156,7 +170,7 @@ export default function Home() {
     localStorage.removeItem('user');
   };
 
-  const handleVote = async (postId, voteType) => {
+  const handleVote = async (postId, hilarityLevel) => {
     // Check both state and localStorage for token
     const currentToken = token || localStorage.getItem('token');
     if (!currentToken) {
@@ -171,7 +185,7 @@ export default function Home() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${currentToken}`
         },
-        body: JSON.stringify({ voteType })
+        body: JSON.stringify({ hilarityLevel })
       });
 
       if (res.status === 401) {
@@ -182,9 +196,15 @@ export default function Home() {
 
       if (res.ok) {
         const data = await res.json();
-        setPosts(posts.map(p => 
-          p.id === postId 
-            ? { ...p, upvotes: data.upvotes, downvotes: data.downvotes, userVote: data.userVote }
+        setPosts((prev) => prev.map((p) =>
+          p.id === postId
+            ? {
+                ...p,
+                upvotes: data.upvotes,
+                downvotes: data.downvotes,
+                userVote: data.userVote,
+                userHilarityLevel: data.userHilarityLevel
+              }
             : p
         ));
       }
@@ -195,7 +215,8 @@ export default function Home() {
 
   const handleCreatePost = async (e) => {
     e.preventDefault();
-    if (!token) {
+    const currentToken = getAuthToken();
+    if (!currentToken) {
       setShowAuth(true);
       return;
     }
@@ -206,7 +227,7 @@ export default function Home() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${currentToken}`
         },
         body: JSON.stringify({
           ...postForm,
@@ -214,13 +235,43 @@ export default function Home() {
         })
       });
 
-      if (res.ok) {
-        setShowAddPost(false);
-        setPostForm({ type: 'joke', title: '', content: '', media: '', interest: 'Programming', tags: '' });
-        fetchPosts();
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        setPostModal({
+          isOpen: true,
+          status: 'error',
+          message: data.error || 'Failed to post. Please try again.'
+        });
+        return;
       }
+
+      const newPost = {
+        ...data,
+        tags: Array.isArray(data.tags) ? data.tags : [],
+        userVote: null,
+        userHilarityLevel: null
+      };
+
+      setPosts((prev) => [newPost, ...prev]);
+      setSelectedInterest(newPost.interest || 'Programming');
+      setSortBy('trending');
+      setShowAddPost(false);
+      setPostForm({ type: 'joke', title: '', content: '', media: '', interest: 'Programming', tags: '' });
+      setPostModal({
+        isOpen: true,
+        status: 'success',
+        message: 'Post uploaded successfully.'
+      });
+
+      await fetchPosts();
     } catch (error) {
       console.error('Create post failed:', error);
+      setPostModal({
+        isOpen: true,
+        status: 'error',
+        message: 'Posting failed due to a network error. Please try again.'
+      });
     } finally {
       setLoading(false);
     }
@@ -415,6 +466,13 @@ export default function Home() {
   const canDeletePost = (post) => {
     if (!user) return false;
     return Number(post.user_id) === Number(user.id);
+  };
+
+  const getHilarityScore = (post) => {
+    const totalVotes = post.upvotes + post.downvotes;
+    if (totalVotes === 0) return 0;
+    const weighted = ((post.upvotes - post.downvotes) / totalVotes) * 2 + 3;
+    return Math.max(1, Math.min(5, Math.round(weighted)));
   };
 
   const handleVideoPlayable = (postId) => {
@@ -856,22 +914,31 @@ export default function Home() {
 
                       {/* Actions Row */}
                       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                        <div className="flex items-center gap-2">
-                          <button
-                            className={`p-1 transition-colors ${post.userVote === 'up' ? 'text-green-500' : (theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black')}`}
-                            onClick={() => handleVote(post.id, 'up')}
-                            data-testid={`upvote-${post.id}`}
-                          >
-                            <ArrowUp size={18} />
-                          </button>
-                          <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{formatVotes(post.upvotes)}</span>
-                          <button
-                            className={`p-1 transition-colors ${post.userVote === 'down' ? 'text-red-500' : (theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black')}`}
-                            onClick={() => handleVote(post.id, 'down')}
-                            data-testid={`downvote-${post.id}`}
-                          >
-                            <ArrowDown size={18} />
-                          </button>
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-1.5">
+                            {HILARITY_LEVELS.map((item, index) => {
+                              const isSelected = post.userHilarityLevel === item.level;
+                              return (
+                                <motion.button
+                                  key={item.level}
+                                  whileHover={{ scale: 1.22, y: -4 }}
+                                  whileTap={{ scale: 0.92 }}
+                                  animate={{ rotate: isSelected ? [0, -8, 8, 0] : 0 }}
+                                  transition={{ duration: 0.3, delay: index * 0.03 }}
+                                  className={`text-2xl md:text-3xl transition-all ${isSelected ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
+                                  style={{ filter: isSelected ? 'drop-shadow(0 3px 0 rgba(0,0,0,0.25)) drop-shadow(0 10px 14px rgba(0,0,0,0.25))' : 'drop-shadow(0 2px 0 rgba(0,0,0,0.2))' }}
+                                  onClick={() => handleVote(post.id, item.level)}
+                                  title={item.label}
+                                  data-testid={`hilarity-${post.id}-${item.level}`}
+                                >
+                                  <span aria-hidden="true">{item.emoji}</span>
+                                </motion.button>
+                              );
+                            })}
+                          </div>
+                          <span className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                            Hilarity {getHilarityScore(post)}/5 • {formatVotes(post.upvotes + post.downvotes)} votes
+                          </span>
                         </div>
                         <div className="flex items-center gap-4">
                           <button className={`flex items-center gap-1.5 text-sm transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black'}`} data-testid={`share-${post.id}`}>
@@ -1118,6 +1185,29 @@ export default function Home() {
                 onClick={closeProfileModal}
                 className="px-6 py-2 rounded-full text-sm font-medium text-white bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
                 data-testid="profile-modal-ok-btn"
+              >
+                Ok
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Post Feedback Modal */}
+      {postModal.isOpen && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" data-testid="post-feedback-modal">
+          <div className={`rounded-xl p-6 md:p-8 w-full max-w-xs md:max-w-sm border ${theme === 'dark' ? 'bg-[#171932] border-[#2d3154]' : 'bg-white border-gray-200'}`}>
+            <h2 className={`text-lg md:text-xl font-semibold text-center mb-3 ${postModal.status === 'success' ? 'text-green-500' : 'text-red-500'}`}>
+              {postModal.status === 'success' ? 'Success' : 'Post Failed'}
+            </h2>
+            <p className={`text-sm text-center mb-6 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+              {postModal.message}
+            </p>
+            <div className="flex items-center justify-center">
+              <button
+                onClick={() => setPostModal({ isOpen: false, status: 'success', message: '' })}
+                className="px-6 py-2 rounded-full text-sm font-medium text-white bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
+                data-testid="post-modal-ok-btn"
               >
                 Ok
               </button>

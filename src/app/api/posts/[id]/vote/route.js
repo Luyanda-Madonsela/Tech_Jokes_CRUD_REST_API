@@ -10,11 +10,14 @@ export async function POST(request, { params }) {
     }
     
     const postId = parseInt(params.id);
-    const { voteType } = await request.json();
-    
-    if (!['up', 'down'].includes(voteType)) {
-      return NextResponse.json({ error: 'Invalid vote type' }, { status: 400 });
+    const { hilarityLevel } = await request.json();
+    const parsedLevel = Number(hilarityLevel);
+
+    if (!Number.isInteger(parsedLevel) || parsedLevel < 1 || parsedLevel > 5) {
+      return NextResponse.json({ error: 'Invalid hilarity level' }, { status: 400 });
     }
+
+    const voteType = parsedLevel >= 3 ? 'up' : 'down';
     
     // Check if post exists
     const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(postId);
@@ -26,7 +29,9 @@ export async function POST(request, { params }) {
     const existingVote = db.prepare('SELECT * FROM votes WHERE user_id = ? AND post_id = ?').get(user.userId, postId);
     
     if (existingVote) {
-      if (existingVote.vote_type === voteType) {
+      const existingLevel = Number(existingVote.hilarity_level || (existingVote.vote_type === 'up' ? 5 : 1));
+
+      if (existingVote.vote_type === voteType && existingLevel === parsedLevel) {
         // Remove vote (toggle off)
         db.prepare('DELETE FROM votes WHERE id = ?').run(existingVote.id);
         
@@ -40,28 +45,32 @@ export async function POST(request, { params }) {
         return NextResponse.json({ 
           upvotes: updatedPost.upvotes, 
           downvotes: updatedPost.downvotes,
-          userVote: null 
+          userVote: null,
+          userHilarityLevel: null
         });
       } else {
-        // Change vote
-        db.prepare('UPDATE votes SET vote_type = ? WHERE id = ?').run(voteType, existingVote.id);
+        // Change vote and/or hilarity level
+        db.prepare('UPDATE votes SET vote_type = ?, hilarity_level = ? WHERE id = ?').run(voteType, parsedLevel, existingVote.id);
         
-        if (voteType === 'up') {
-          db.prepare('UPDATE posts SET upvotes = upvotes + 1, downvotes = downvotes - 1 WHERE id = ?').run(postId);
-        } else {
-          db.prepare('UPDATE posts SET upvotes = upvotes - 1, downvotes = downvotes + 1 WHERE id = ?').run(postId);
+        if (existingVote.vote_type !== voteType) {
+          if (voteType === 'up') {
+            db.prepare('UPDATE posts SET upvotes = upvotes + 1, downvotes = downvotes - 1 WHERE id = ?').run(postId);
+          } else {
+            db.prepare('UPDATE posts SET upvotes = upvotes - 1, downvotes = downvotes + 1 WHERE id = ?').run(postId);
+          }
         }
         
         const updatedPost = db.prepare('SELECT * FROM posts WHERE id = ?').get(postId);
         return NextResponse.json({ 
           upvotes: updatedPost.upvotes, 
           downvotes: updatedPost.downvotes,
-          userVote: voteType 
+          userVote: voteType,
+          userHilarityLevel: parsedLevel
         });
       }
     } else {
       // New vote
-      db.prepare('INSERT INTO votes (user_id, post_id, vote_type) VALUES (?, ?, ?)').run(user.userId, postId, voteType);
+      db.prepare('INSERT INTO votes (user_id, post_id, vote_type, hilarity_level) VALUES (?, ?, ?, ?)').run(user.userId, postId, voteType, parsedLevel);
       
       if (voteType === 'up') {
         db.prepare('UPDATE posts SET upvotes = upvotes + 1 WHERE id = ?').run(postId);
@@ -73,7 +82,8 @@ export async function POST(request, { params }) {
       return NextResponse.json({ 
         upvotes: updatedPost.upvotes, 
         downvotes: updatedPost.downvotes,
-        userVote: voteType 
+        userVote: voteType,
+        userHilarityLevel: parsedLevel
       });
     }
   } catch (error) {

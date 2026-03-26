@@ -65,6 +65,9 @@ try {
 try {
   db.exec('ALTER TABLE posts ADD COLUMN edited_at DATETIME');
 } catch (e) { /* column already exists */ }
+try {
+  db.exec('ALTER TABLE votes ADD COLUMN hilarity_level INTEGER DEFAULT 5');
+} catch (e) { /* column already exists */ }
 
 // Seed sample data if empty
 const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();
