@@ -39,6 +39,18 @@ export default function Home() {
   const [newUsername, setNewUsername] = useState('');
   const [editingPost, setEditingPost] = useState(null);
   const [editPostForm, setEditPostForm] = useState({ title: '', content: '', interest: '' });
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    postId: null,
+    status: 'confirm',
+    message: '',
+    processing: false
+  });
+  const [profileModal, setProfileModal] = useState({
+    isOpen: false,
+    status: 'success',
+    message: ''
+  });
 
   // Auth form state
   const [authForm, setAuthForm] = useState({ username: '', email: '', password: '' });
@@ -53,6 +65,7 @@ export default function Home() {
     interest: 'Programming',
     tags: ''
   });
+  const [videoLoadingMap, setVideoLoadingMap] = useState({});
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
@@ -68,6 +81,18 @@ export default function Home() {
   useEffect(() => {
     fetchPosts();
   }, [activeTab, selectedInterest, sortBy, token]);
+
+  useEffect(() => {
+    setVideoLoadingMap((prev) => {
+      const next = {};
+      posts.forEach((post) => {
+        if (post.type === 'clip' && post.media) {
+          next[post.id] = prev[post.id] ?? true;
+        }
+      });
+      return next;
+    });
+  }, [posts]);
 
   const fetchPosts = async () => {
     try {
@@ -260,9 +285,25 @@ export default function Home() {
     fetchProfile();
   };
 
+  const openProfileModal = (status, message) => {
+    setProfileModal({
+      isOpen: true,
+      status,
+      message
+    });
+  };
+
+  const closeProfileModal = () => {
+    setProfileModal({
+      isOpen: false,
+      status: 'success',
+      message: ''
+    });
+  };
+
   const handleUpdateUsername = async () => {
     if (!newUsername.trim() || newUsername.length < 3) {
-      alert('Username must be at least 3 characters');
+      openProfileModal('error', 'Username must be at least 3 characters.');
       return;
     }
     const currentToken = getAuthToken();
@@ -284,46 +325,100 @@ export default function Home() {
         setUser(data.user);
         localStorage.setItem('user', JSON.stringify(data.user));
         setEditingUsername(false);
+        openProfileModal('success', 'Username updated successfully.');
       } else {
         const error = await res.json();
-        alert(error.error || 'Failed to update username');
+        openProfileModal('error', error.error || 'Failed to update username.');
       }
     } catch (error) {
       console.error('Update username failed:', error);
+      openProfileModal('error', 'Update request failed. Please try again.');
     }
   };
 
-  const handleDeletePost = async (postId) => {
-    if (!confirm('Are you sure you want to delete this post?')) return;
+  const openDeleteModal = (postId) => {
+    setDeleteModal({
+      isOpen: true,
+      postId,
+      status: 'confirm',
+      message: 'Are you sure you want to delete this post?',
+      processing: false
+    });
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteModal({
+      isOpen: false,
+      postId: null,
+      status: 'confirm',
+      message: '',
+      processing: false
+    });
+  };
+
+  const handleDeletePost = async () => {
+    if (!deleteModal.postId) return;
+
     const currentToken = getAuthToken();
     if (!currentToken) {
+      closeDeleteModal();
       setShowAuth(true);
       return;
     }
+
+    setDeleteModal((prev) => ({ ...prev, processing: true }));
+
     try {
-      const res = await fetch(`/api/posts/${postId}`, {
+      const res = await fetch(`/api/posts/${deleteModal.postId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${currentToken}` }
       });
+
       if (res.ok) {
-        setProfilePosts(profilePosts.filter(p => p.id !== postId));
-        fetchPosts(); // Refresh main posts list
+        setProfilePosts((prev) => prev.filter((p) => p.id !== deleteModal.postId));
+        setPosts((prev) => prev.filter((p) => p.id !== deleteModal.postId));
+        await fetchPosts();
+        setDeleteModal((prev) => ({
+          ...prev,
+          status: 'success',
+          message: 'Post deleted successfully.',
+          processing: false
+        }));
       } else {
         const error = await res.json().catch(() => ({}));
-        alert(error.error || 'Failed to delete post');
+        setDeleteModal((prev) => ({
+          ...prev,
+          status: 'error',
+          message: error.error || 'Failed to delete post.',
+          processing: false
+        }));
         if (res.status === 401) {
           setShowAuth(true);
         }
       }
     } catch (error) {
       console.error('Delete post failed:', error);
-      alert('Delete request failed. Please try again.');
+      setDeleteModal((prev) => ({
+        ...prev,
+        status: 'error',
+        message: 'Delete request failed. Please try again.',
+        processing: false
+      }));
     }
   };
 
   const handleEditPost = (post) => {
     setEditingPost(post);
     setEditPostForm({ title: post.title, content: post.content || '', interest: post.interest });
+  };
+
+  const canDeletePost = (post) => {
+    if (!user) return false;
+    return Number(post.user_id) === Number(user.id);
+  };
+
+  const handleVideoPlayable = (postId) => {
+    setVideoLoadingMap((prev) => ({ ...prev, [postId]: false }));
   };
 
   const handleSaveEdit = async () => {
@@ -624,7 +719,7 @@ export default function Home() {
                                   <Edit3 size={16} />
                                 </button>
                                 <button
-                                  onClick={() => handleDeletePost(post.id)}
+                                  onClick={() => openDeleteModal(post.id)}
                                   className={`p-2 transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-red-500' : 'text-gray-600 hover:text-red-600'}`}
                                   data-testid={`delete-post-${post.id}`}
                                 >
@@ -716,9 +811,22 @@ export default function Home() {
                       <div className={`w-full rounded-lg mb-3 overflow-hidden border ${theme === 'dark' ? 'border-[#252850] bg-[#12152a]' : 'border-gray-200 bg-gray-50'}`}>
                         {post.media ? (
                           post.type === 'clip' ? (
-                            <video controls className="w-full">
-                              <source src={post.media} />
-                            </video>
+                            <div className="relative w-full bg-black h-64 md:h-96">
+                              <video 
+                                controls 
+                                className="w-full h-full"
+                                preload="metadata"
+                                onCanPlay={() => handleVideoPlayable(post.id)}
+                                onError={() => handleVideoPlayable(post.id)}
+                              >
+                                <source src={post.media} />
+                              </video>
+                              {videoLoadingMap[post.id] !== false && (
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/20">
+                                  <div className="w-12 h-12 border-4 border-gray-400 border-t-white rounded-full animate-spin"></div>
+                                </div>
+                              )}
+                            </div>
                           ) : (
                             <img src={post.media} alt={post.title} className="w-full object-cover" />
                           )
@@ -765,10 +873,22 @@ export default function Home() {
                             <ArrowDown size={18} />
                           </button>
                         </div>
-                        <button className={`flex items-center gap-1.5 text-sm transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black'}`} data-testid={`share-${post.id}`}>
-                          <Share2 size={16} />
-                          Share
-                        </button>
+                        <div className="flex items-center gap-4">
+                          <button className={`flex items-center gap-1.5 text-sm transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black'}`} data-testid={`share-${post.id}`}>
+                            <Share2 size={16} />
+                            Share
+                          </button>
+                          {canDeletePost(post) && (
+                            <button
+                              className={`flex items-center gap-1.5 text-sm transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-red-500' : 'text-gray-600 hover:text-red-600'}`}
+                              onClick={() => openDeleteModal(post.id)}
+                              data-testid={`timeline-delete-post-${post.id}`}
+                            >
+                              <Trash2 size={16} />
+                              Delete
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))
@@ -934,6 +1054,74 @@ export default function Home() {
                 {isLogin ? 'Sign Up' : 'Sign In'}
               </button>
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Modal */}
+      {deleteModal.isOpen && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" data-testid="delete-modal">
+          <div className={`rounded-xl p-6 md:p-8 w-full max-w-xs md:max-w-sm border ${theme === 'dark' ? 'bg-[#171932] border-[#2d3154]' : 'bg-white border-gray-200'}`}>
+            <h2 className={`text-lg md:text-xl font-semibold text-center mb-3 ${theme === 'dark' ? 'text-white' : 'text-black'}`}>
+              {deleteModal.status === 'confirm' ? 'Delete Post' : deleteModal.status === 'success' ? 'Success' : 'Delete Failed'}
+            </h2>
+            <p className={`text-sm text-center mb-6 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+              {deleteModal.message}
+            </p>
+
+            {deleteModal.status === 'confirm' ? (
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  onClick={closeDeleteModal}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${theme === 'dark' ? 'border border-[#3d4270] text-gray-300 hover:text-white hover:border-[#5a6aff]' : 'border border-gray-300 text-gray-700 hover:text-black hover:border-gray-400'}`}
+                  disabled={deleteModal.processing}
+                  data-testid="delete-cancel-btn"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeletePost}
+                  className="px-5 py-2 rounded-full text-sm font-medium text-white bg-gradient-to-r from-red-500 to-rose-600 hover:shadow-lg hover:shadow-red-500/30 transition-all"
+                  disabled={deleteModal.processing}
+                  data-testid="delete-confirm-btn"
+                >
+                  {deleteModal.processing ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center">
+                <button
+                  onClick={closeDeleteModal}
+                  className="px-6 py-2 rounded-full text-sm font-medium text-white bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
+                  data-testid="delete-modal-ok-btn"
+                >
+                  Ok
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Profile Feedback Modal */}
+      {profileModal.isOpen && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" data-testid="profile-feedback-modal">
+          <div className={`rounded-xl p-6 md:p-8 w-full max-w-xs md:max-w-sm border ${theme === 'dark' ? 'bg-[#171932] border-[#2d3154]' : 'bg-white border-gray-200'}`}>
+            <h2 className={`text-lg md:text-xl font-semibold text-center mb-3 ${profileModal.status === 'success' ? 'text-green-500' : 'text-red-500'}`}>
+              {profileModal.status === 'success' ? 'Success' : 'Update Failed'}
+            </h2>
+            <p className={`text-sm text-center mb-6 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+              {profileModal.message}
+            </p>
+            <div className="flex items-center justify-center">
+              <button
+                onClick={closeProfileModal}
+                className="px-6 py-2 rounded-full text-sm font-medium text-white bg-gradient-to-r from-[#4f6ef7] to-[#6366f1] hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
+                data-testid="profile-modal-ok-btn"
+              >
+                Ok
+              </button>
+            </div>
           </div>
         </div>
       )}
